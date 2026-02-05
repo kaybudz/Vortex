@@ -16,6 +16,7 @@ from pyqtgraph import PlotWidget
 import folium
 from io import BytesIO
 from read_data import live_read
+import serial
 
 dark_blue = QtGui.QColor(0, 107, 163)
 class GCS(QMainWindow):
