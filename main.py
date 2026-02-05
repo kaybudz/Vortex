@@ -6,7 +6,7 @@
 # importing necessary libraries
 import sys
 import os
-from PyQt5 import QtCore, QtGui, QtWidgets, QtWebEngine
+from PyQt5 import QtCore, QtGui, QtWidgets 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QFrame
 from PyQt5.QtWidgets import QSizePolicy
@@ -23,11 +23,6 @@ class GCS(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        # determining screen size
-        # avGeom = QDesktopWidget().availableGeometry()
-        # avGeom.setTop(24)
-        # self.setGeometry(avGeom)
-
         # setting up style of background of window
         self.setGeometry(100, 100, 1024, 600)
         self.setStyleSheet("background-color: #cce5ff;")
@@ -45,8 +40,6 @@ class GCS(QMainWindow):
         data_layout.setSpacing(10)
 
         # making the data table
-        # table_frame = QFrame(data_table)
-        # table_frame.setStyleSheet('border: 5px solid #cd96ff')
         data_table = QTableWidget()
         data_table.setStyleSheet('background-color: white; font-family: roboto; font-size: 14px; font-weight: bold')
         data_table.horizontalHeader().setVisible(False)
@@ -54,19 +47,18 @@ class GCS(QMainWindow):
         data_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         data_table.horizontalHeader().setStretchLastSection(True)
         data_table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        # data_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         data_table.setGridStyle(Qt.SolidLine)
         data_table.setColumnCount(1)
         data_table.setRowCount(9)
         row_labels = [
             'Mission Time', 
-            'Packet Count',
             'Recieved Packets', 
             'Lost Packets', 
             'Payload Release',
             'Egg Release', 
-            'GPS Latitude', 
-            'GPS Longitude',
+            'Temperature (°C)',
+            'GPS Latitude (°N)', 
+            'GPS Longitude (°E)',
             'Satellites'
             ]
         data_table.setVerticalHeaderLabels(row_labels)
@@ -74,7 +66,6 @@ class GCS(QMainWindow):
 
         # making the button layout
         button_layout = QGridLayout()
-        # button_layout.setSpacing(10)
         sim_enable = QPushButton()
         cx_on = QPushButton()
         cx_on.setText('CX On')
@@ -90,15 +81,15 @@ class GCS(QMainWindow):
         sim_disable = QPushButton()
         sim_disable.setText('SIM Disable')
         sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        lock = QPushButton()
-        lock.setText('Lock')
-        lock.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        acs = QPushButton()
+        acs.setText('ACS')
+        acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        egg_release = QPushButton()
+        egg_release.setText('Egg Drop')
+        egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         probe_release = QPushButton()
-        probe_release.setText('Egg Drop')
+        probe_release.setText('Release')
         probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        para_deploy = QPushButton()
-        para_deploy.setText('Release')
-        para_deploy.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         calibrate = QPushButton()
         calibrate.setText('Calibrate')
         calibrate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
@@ -111,13 +102,13 @@ class GCS(QMainWindow):
         button_layout.addWidget(sim_enable, 0, 0)
         button_layout.addWidget(sim_activate, 0, 1)
         button_layout.addWidget(sim_disable, 1, 0)
-        button_layout.addWidget(lock, 1, 1)
+        button_layout.addWidget(acs, 1, 1)
         button_layout.addWidget(cx_on, 2, 0)
         button_layout.addWidget(cx_off, 2, 1)
         button_layout.addWidget(calibrate, 3, 0)
         button_layout.addWidget(set_time, 3, 1)
-        button_layout.addWidget(para_deploy, 4, 0)
-        button_layout.addWidget(probe_release, 4, 1)
+        button_layout.addWidget(probe_release, 4, 0)
+        button_layout.addWidget(egg_release, 4, 1)
         # button_layout.addWidget(party_mode, 4, 1)
         data_layout.addLayout(button_layout, 1)
 
@@ -174,7 +165,7 @@ class GCS(QMainWindow):
         gyro_graph.setBackground('white')
         gyro_graph.setStyleSheet('border: 5px solid #006ba3')
         gyro_graph.setTitle('Rotation', color = 'k', **{'font-size':'14pt'})
-        gyro_graph.setLabel("left", "Rotation (deg)", color = "k", **{'font-size':'12pt'})
+        gyro_graph.setLabel("left", "Rotation (deg/s)", color = "k", **{'font-size':'12pt'})
         gyro_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
         gyro_graph.showGrid(x=True, y=True)
 
@@ -197,13 +188,24 @@ class GCS(QMainWindow):
         info_layout = QHBoxLayout()
         
         # adding information to the info layout
+        # make sure to actually fill in with variables later
         fsw = QLabel('FSW State: ')
         fsw.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-        info_layout.addWidget(fsw)
-        echo = QLabel()
+        info_layout.addWidget(fsw, 50)
+        echo = QLabel('CMD Echo: ')
         echo.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-        echo.setText('CMD_Echo: ') # make sure to add variable later that actually reads the cmd_echo
-        info_layout.addWidget(echo)
+        info_layout.addWidget(echo, 50)
+        velocity = QLabel('Velocity (m/s): ')
+        velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+        info_layout.addWidget(velocity, 50)
+
+        # # adding logo to top of screen
+        # logo_pixmap = QPixmap("C:/Users/kayla/Python311/Vortex/Vortex_Logo.png")
+        # logo_width, logo_height = 30, 30
+        # logo_pixmap = logo_pixmap.scaled(logo_width, logo_height, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+        # logo_label = QLabel()
+        # logo_label.setPixmap(logo_pixmap)
+        # info_layout.addWidget(logo_label, 1)
         
         # put everything into one layout, numbers are for sizing ratios
         base_layout.addLayout(data_layout, 30)
