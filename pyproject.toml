@@ -6,11 +6,11 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "folium>=0.20.0",
-    "pyqt5>=5.15.11",
+    "pyqt5>=5.0",
     "pyqtgraph>=0.14.0",
-    "pyqtwebengine>=5.15.7",
+    "pyqtwebengine==5.15.2; platform_machine != 'aarch64'",
     "pyserial>=3.5",
 ]
 
 [tool.uv]
-required-environments = ["sys_platform == 'win32'"]
+required-environments = [ "sys_platform == 'win32' and platform_machine == 'AMD64'" , "sys_platform == 'linux' and platform_machine == 'aarch64'" ]
