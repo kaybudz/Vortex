@@ -8,15 +8,18 @@ import sys
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QFrame
-from PyQt5.QtWidgets import QSizePolicy
-from PyQt5.QtGui import QColor, QIcon, QPixmap, QFont
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
 from pyqtgraph import PlotWidget
 import folium
 from io import BytesIO
 from read_data import live_read
 import serial
+import matplotlib.pyplot as plt # UV INSTALL THIS SO ETHAN CAN ACCESS
+# from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+# from matplotlib.figure import Figure
+
 
 dark_blue = QtGui.QColor(0, 107, 163)
 class GCS(QMainWindow):
@@ -129,6 +132,15 @@ class GCS(QMainWindow):
         webView = QWebEngineView(self)
         webView.setHtml(html) 
 
+        # # creating 3D plot
+        # location = plt.figure()
+        # loc_graph = location.add_subplot(111, projection='3d')
+        # loc_graph.set_xlabel('Latitude(°N)')
+        # loc_graph.set_ylabel('Longitude (°E)')
+        # loc_graph.set_zlabel('Altitude (m)')
+        # loc_graph.set_title('Flight Path')
+        # # plt.show()
+
         alt_graph = PlotWidget() # placeholder graphs
         alt_graph.setBackground('white')
         alt_graph.setStyleSheet('border: 5px solid #006ba3')
@@ -179,6 +191,7 @@ class GCS(QMainWindow):
 
         # adding graphs to graph layout
         graph_layout.addWidget(webView, 0, 0)
+        # graph_layout.addWidget(loc_graph, 0, 0)
         graph_layout.addWidget(alt_graph, 0, 1)
         graph_layout.addWidget(volt_graph, 0, 2)
         graph_layout.addWidget(curr_graph, 1, 0)

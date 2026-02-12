@@ -8,6 +8,6 @@ class sim():
         
         self.sim_enable.clicked.connect(self.sime)
         def sime():
-            sim_enable.setBackground('k')
+            sim_enable.setBackground('2')
 
     

@@ -31,7 +31,7 @@ class live_read():
     cmd = []
 
     def start(self):
-        self.read = serial.Serial('COM13', 9600, timeout=2) #COM is subject to change
+        self.read = serial.Serial('COM13', 115200, timeout=2) #COM is subject to change
 
     def update(self):
         with self.read:
