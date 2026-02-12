@@ -8,7 +8,7 @@ import sys
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
 from pyqtgraph import PlotWidget
@@ -20,13 +20,13 @@ import matplotlib.pyplot as plt # UV INSTALL THIS SO ETHAN CAN ACCESS
 # from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 # from matplotlib.figure import Figure
 
-
 dark_blue = QtGui.QColor(0, 107, 163)
 class GCS(QMainWindow):
     # creating main window
     def __init__(self):
         super().__init__()
         
+        # CODE FOR CREATING A UI
         # setting up style of background of window
         self.setGeometry(100, 100, 1024, 600)
         self.setStyleSheet("background-color: #cce5ff;")
@@ -44,16 +44,16 @@ class GCS(QMainWindow):
         data_layout.setSpacing(10)
 
         # making the data table
-        data_table = QTableWidget()
-        data_table.setStyleSheet('background-color: white; font-family: roboto; font-size: 14px; font-weight: bold')
-        data_table.horizontalHeader().setVisible(False)
-        data_table.setEditTriggers(QTableWidget.NoEditTriggers) # so that table cannot be edited live
-        data_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        data_table.horizontalHeader().setStretchLastSection(True)
-        data_table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        data_table.setGridStyle(Qt.SolidLine)
-        data_table.setColumnCount(1)
-        data_table.setRowCount(9)
+        self.data_table = QTableWidget()
+        self.data_table.setStyleSheet('background-color: white; font-family: roboto; font-size: 14px; font-weight: bold')
+        self.data_table.horizontalHeader().setVisible(False)
+        self.data_table.setEditTriggers(QTableWidget.NoEditTriggers) # so that table cannot be edited live
+        self.data_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.data_table.horizontalHeader().setStretchLastSection(True)
+        self.data_table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.data_table.setGridStyle(Qt.SolidLine)
+        self.data_table.setColumnCount(1)
+        self.data_table.setRowCount(9)
         row_labels = [
             'Mission Time', 
             'Recieved Packets', 
@@ -65,54 +65,64 @@ class GCS(QMainWindow):
             'GPS Longitude (°E)',
             'Satellites'
             ]
-        data_table.setVerticalHeaderLabels(row_labels)
-        data_layout.addWidget(data_table, 1)
+        self.data_table.setVerticalHeaderLabels(row_labels)
+        data_layout.addWidget(self.data_table, 1)
 
         # making the button layout
         button_layout = QGridLayout()
-        sim_enable = QPushButton()
-        cx_on = QPushButton()
-        cx_on.setText('CX On')
-        cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        cx_off = QPushButton()
-        cx_off.setText('CX Off')
-        cx_off.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        sim_enable.setText('SIM Enable')
-        sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        sim_activate = QPushButton()
-        sim_activate.setText('SIM Activate')
-        sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        sim_disable = QPushButton()
-        sim_disable.setText('SIM Disable')
-        sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        acs = QPushButton()
-        acs.setText('ACS')
-        acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        egg_release = QPushButton()
-        egg_release.setText('Egg Drop')
-        egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        probe_release = QPushButton()
-        probe_release.setText('Release')
-        probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        calibrate = QPushButton()
-        calibrate.setText('Calibrate')
-        calibrate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        set_time = QPushButton()
-        set_time.setText('Set Time')
-        set_time.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.cx_on = QPushButton('CX On')
+        self.cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.cx_on.clicked.connect(self.start_cx)
+
+        self.cx_off = QPushButton('CX Off')
+        self.cx_off.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.cx_off.clicked.connect(self.stop_cx)
+
+        self.sim_enable = QPushButton('SIM Enable')
+        self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.sim_enable.clicked.connect(self.sim_e)
+
+        self.sim_activate = QPushButton('SIM Activate')
+        self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.sim_activate.clicked.connect(self.sim_a)
+
+        self.sim_disable = QPushButton('SIM Disable')
+        self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.sim_disable.clicked.connect(self.sim_d)
+
+        self.acs = QPushButton('ACS')
+        self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.acs.clicked.connect(self.acs_sys)
+
+        self.egg_release = QPushButton('Egg Drop')
+        self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.egg_release.clicked.connect(self.egg_drop)
+
+        self.probe_release = QPushButton('Release')
+        self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.probe_release.clicked.connect(self.payload)
+
+        self.calibrate = QPushButton('Calibrate')
+        self.calibrate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.calibrate.clicked.connect(self.cal)
+
+        self.set_time = QPushButton('Set Time')
+        self.set_time.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.set_time.clicked.connect(self.time_set)
+
         # party_mode = QPushButton()
         # party_mode.setText('Party Mode')
         # party_mode.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        button_layout.addWidget(sim_enable, 0, 0)
-        button_layout.addWidget(sim_activate, 0, 1)
-        button_layout.addWidget(sim_disable, 1, 0)
-        button_layout.addWidget(acs, 1, 1)
-        button_layout.addWidget(cx_on, 2, 0)
-        button_layout.addWidget(cx_off, 2, 1)
-        button_layout.addWidget(calibrate, 3, 0)
-        button_layout.addWidget(set_time, 3, 1)
-        button_layout.addWidget(probe_release, 4, 0)
-        button_layout.addWidget(egg_release, 4, 1)
+        button_layout.addWidget(self.sim_enable, 0, 0)
+        button_layout.addWidget(self.sim_activate, 0, 1)
+        button_layout.addWidget(self.sim_disable, 1, 0)
+        button_layout.addWidget(self.acs, 1, 1)
+        button_layout.addWidget(self.cx_on, 2, 0)
+        button_layout.addWidget(self.cx_off, 2, 1)
+        button_layout.addWidget(self.calibrate, 3, 0)
+        button_layout.addWidget(self.set_time, 3, 1)
+        button_layout.addWidget(self.probe_release, 4, 0)
+        button_layout.addWidget(self.egg_release, 4, 1)
         # button_layout.addWidget(party_mode, 4, 1)
         data_layout.addLayout(button_layout, 1)
 
@@ -212,14 +222,6 @@ class GCS(QMainWindow):
         velocity = QLabel('Velocity (m/s): ')
         velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         info_layout.addWidget(velocity, 50)
-
-        # # adding logo to top of screen
-        # logo_pixmap = QPixmap("C:/Users/kayla/Python311/Vortex/Vortex_Logo.png")
-        # logo_width, logo_height = 30, 30
-        # logo_pixmap = logo_pixmap.scaled(logo_width, logo_height, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-        # logo_label = QLabel()
-        # logo_label.setPixmap(logo_pixmap)
-        # info_layout.addWidget(logo_label, 1)
         
         # put everything into one layout, numbers are for sizing ratios
         base_layout.addLayout(data_layout, 30)
@@ -228,7 +230,102 @@ class GCS(QMainWindow):
         # add header 
         final_layout.addLayout(info_layout)
         final_layout.addLayout(base_layout)
+
+        # set data read to false
+        self.data_read = False
+        self.comm = live_read
+
+        # MAKING CODE TO UPDATE GRAPHS
+        # def update_graphs(self):
+        #     c
+        
+    # MAKING BUTTON COMMANDS
+    # MAKE THE COMMANDS ACTUALLY SEND
+
+    # cx_on
+    def start_cx(self):
+        self.data_read = True
+        # self.comm.send('CMD,1093,CX,ON')
+        self.cx_on.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
     
+    # cx_off
+    def stop_cx(self):
+        self.data_read = False
+        # self.comm.send('CMD,1093,CX,OFF')
+        self.cx_off.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+    
+    # set time
+    def time_set(self):
+        # self.comm.send('CMD,1093,ST,UTC')
+        self.data_table.setItem(0, 0, QTableWidgetItem('00:00:00'))
+        # self.data_table.setItem(0, 0, QTableWidgetItem(time[-1]))
+        self.set_time.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+
+    # sim enable
+    def sim_e(self):
+        # self.comm.simEnabled = True
+        # self.comm.send('CMD,1093,SIM,ENABLE')
+        self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+
+    # sim activate
+    def sim_a(self):
+        # self.comm.simActivated = True
+        self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        # if self.comm.simEnabled:
+        #     # self.comm.send('CMD,1093,SIM,ACTIVATE')
+        #     # code to read CSV file
+        #     if csv_filename:
+        #         self.comm.sim_mode(csv_filename)   
+
+    # sim disable
+    def sim_d(self):
+        # self.comm.simulation = False
+        # self.comm.stop_simulation()
+        # self.comm.send("CMD,1093,SIM,DISABLE")
+        # self.comm.simEnabled = False
+        self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+    
+    # calibration
+    def cal(self):
+        # self.comm.send("CMD,1093,CAL")
+        self.calibrate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+    
+    # egg drop
+    egg = False
+    def egg_drop(self):
+        if self.egg == False:
+            self.egg = True
+            # self.comm.send("CMD,3195,MEC,EGG,ON")
+            self.egg_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        else:
+            self.egg = False
+            # self.comm.send("CMD,3195,MEC,EGG,OFF")
+            self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+
+    # payload release
+    pl = False
+    def payload(self):
+        if self.pl == False:
+            self.pl = True
+            # self.comm.send("CMD,3195,MEC,PROBE,ON")
+            self.probe_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        else:
+            self.pl = False
+            # self.comm.send("CMD,3195,MEC,PROBE,OFF")
+            self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+
+    # ACS
+    sys = False
+    def acs_sys(self):
+        if self.sys == False:
+            self.sys = True
+            # self.comm.send("CMD,3195,MEC,ACS,ON")
+            self.acs.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        else:
+            self.sys = False
+            # self.comm.send("CMD,3195,MEC,ACS,OFF")
+            self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+
     
 # opening main window
 if __name__ == "__main__":

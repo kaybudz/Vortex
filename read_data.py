@@ -30,7 +30,8 @@ class live_read():
     sats = []
     cmd = []
 
-    def start(self):
+    def start_read(self):
+        self.start = True
         self.read = serial.Serial('COM13', 115200, timeout=2) #COM is subject to change
 
     def update(self):
@@ -75,3 +76,9 @@ class live_read():
                             self.lon.append(float(data_list[19]))
                             self.sats.append(int(data_list[20]))
                             self.cmd.append(data_list[21])
+    
+    
+    
+    def send_command(self):
+        command = 
+        self.serial.write(command.encode('utf-8'))
