@@ -8,7 +8,7 @@ import sys
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
 from pyqtgraph import PlotWidget
@@ -16,16 +16,18 @@ import folium
 from io import BytesIO
 from read_data import live_read
 import serial
-import matplotlib.pyplot as plt # UV INSTALL THIS SO ETHAN CAN ACCESS
-# from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-# from matplotlib.figure import Figure
+import matplotlib # UV INSTALL THIS SO ETHAN CAN ACCESS
+matplotlib.use('QT5Agg')
+import matplotlib.pylab as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 dark_blue = QtGui.QColor(0, 107, 163)
 class GCS(QMainWindow):
     # creating main window
     def __init__(self):
         super().__init__()
-        
+    
         # CODE FOR CREATING A UI
         # setting up style of background of window
         self.setGeometry(100, 100, 1024, 600)
@@ -130,26 +132,31 @@ class GCS(QMainWindow):
         graph_layout = QGridLayout()
         graph_layout.setSpacing(5)
 
-        # TEMPORARY FOR VISUAL PURPOSES
-        latitude = [38.37583] 
-        longitude = [-79.6078] 
-        GPS = folium.Map(location = [latitude[0], longitude[0]], zoom_start=13) 
-        icon = folium.CustomIcon('ufo.png', icon_size = (75,75)) 
-        folium.Marker(location = [latitude[0], longitude[0]], popup = 'Payload', icon = icon).add_to(GPS) 
-        data = BytesIO()
-        GPS.save(data,close_file = False)
-        html = data.getvalue().decode()
-        webView = QWebEngineView(self)
-        webView.setHtml(html) 
+        # # TEMPORARY FOR VISUAL PURPOSES
+        # latitude = [38.37583] 
+        # longitude = [-79.6078] 
+        # GPS = folium.Map(location = [latitude[0], longitude[0]], zoom_start=13) 
+        # icon = folium.CustomIcon('ufo.png', icon_size = (75,75)) 
+        # folium.Marker(location = [latitude[0], longitude[0]], popup = 'Payload', icon = icon).add_to(GPS) 
+        # data = BytesIO()
+        # GPS.save(data,close_file = False)
+        # html = data.getvalue().decode()
+        # webView = QWebEngineView(self)
+        # webView.setHtml(html) 
 
-        # # creating 3D plot
-        # location = plt.figure()
-        # loc_graph = location.add_subplot(111, projection='3d')
-        # loc_graph.set_xlabel('Latitude(°N)')
-        # loc_graph.set_ylabel('Longitude (°E)')
-        # loc_graph.set_zlabel('Altitude (m)')
-        # loc_graph.set_title('Flight Path')
-        # # plt.show()
+        # creating 3D plot
+        location = Figure(constrained_layout=True) # still cant see z axis
+        canvas = FigureCanvas(location)
+        loc_graph = location.add_subplot(111, projection='3d')
+        loc_graph.set_xlabel('Latitude(°N)')
+        loc_graph.set_ylabel('Longitude (°E)')
+        loc_graph.set_zlabel('Altitude (m)')
+        loc_graph.set_title('Flight Path')
+        loc_graph.mouse_init(rotate_btn=None, zoom_btn=None) # keeps plot static
+        loc_frame = QFrame()
+        loc_frame.setStyleSheet("background-color: white; border: 5px solid #006ba3")
+        frame = QVBoxLayout(loc_frame)
+        frame.addWidget(canvas)
 
         alt_graph = PlotWidget() # placeholder graphs
         alt_graph.setBackground('white')
@@ -200,8 +207,8 @@ class GCS(QMainWindow):
         gyro_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
 
         # adding graphs to graph layout
-        graph_layout.addWidget(webView, 0, 0)
-        # graph_layout.addWidget(loc_graph, 0, 0)
+        #graph_layout.addWidget(webView, 0, 0)
+        graph_layout.addWidget(loc_frame, 0, 0), canvas.draw()
         graph_layout.addWidget(alt_graph, 0, 1)
         graph_layout.addWidget(volt_graph, 0, 2)
         graph_layout.addWidget(curr_graph, 1, 0)
@@ -233,7 +240,7 @@ class GCS(QMainWindow):
 
         # set data read to false
         self.data_read = False
-        self.comm = live_read
+        self.comm = live_read()
 
         # MAKING CODE TO UPDATE GRAPHS
         # def update_graphs(self):
@@ -245,49 +252,56 @@ class GCS(QMainWindow):
     # cx_on
     def start_cx(self):
         self.data_read = True
-        # self.comm.send('CMD,1093,CX,ON')
+        self.comm.send('CMD,1093,CX,ON')
         self.cx_on.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-    
+        self.cx_off.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+
     # cx_off
     def stop_cx(self):
         self.data_read = False
-        # self.comm.send('CMD,1093,CX,OFF')
+        self.comm.send('CMD,1093,CX,OFF')
         self.cx_off.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
     
     # set time
     def time_set(self):
-        # self.comm.send('CMD,1093,ST,UTC')
+        self.comm.send('CMD,1093,ST,UTC')
         self.data_table.setItem(0, 0, QTableWidgetItem('00:00:00'))
         # self.data_table.setItem(0, 0, QTableWidgetItem(time[-1]))
         self.set_time.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
 
     # sim enable
     def sim_e(self):
-        # self.comm.simEnabled = True
-        # self.comm.send('CMD,1093,SIM,ENABLE')
+        self.comm.simEnabled = True
+        self.comm.send('CMD,1093,SIM,ENABLE')
         self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+
 
     # sim activate
     def sim_a(self):
-        # self.comm.simActivated = True
-        self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        # if self.comm.simEnabled:
-        #     # self.comm.send('CMD,1093,SIM,ACTIVATE')
-        #     # code to read CSV file
-        #     if csv_filename:
-        #         self.comm.sim_mode(csv_filename)   
+        self.comm.simulation = True
+        if self.comm.simEnabled:
+            self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.comm.send('CMD,1093,SIM,ACTIVATE')
+            # csv_filename = self.comm.csv_filename
+            # # code to read CSV file
+            # if csv_filename:
+            #     self.comm.run_sim(self, csv_filename)   
 
     # sim disable
     def sim_d(self):
-        # self.comm.simulation = False
-        # self.comm.stop_simulation()
-        # self.comm.send("CMD,1093,SIM,DISABLE")
-        # self.comm.simEnabled = False
+        self.comm.simulation = False
+        self.comm.simEnabled = False
+        self.comm.stop_sim(self)
+        self.comm.send("CMD,1093,SIM,DISABLE")
         self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
     
     # calibration
     def cal(self):
-        # self.comm.send("CMD,1093,CAL")
+        self.comm.send("CMD,1093,CAL")
         self.calibrate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
     
     # egg drop
@@ -295,11 +309,11 @@ class GCS(QMainWindow):
     def egg_drop(self):
         if self.egg == False:
             self.egg = True
-            # self.comm.send("CMD,3195,MEC,EGG,ON")
+            self.comm.send("CMD,1093,MEC,EGG,ON")
             self.egg_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         else:
             self.egg = False
-            # self.comm.send("CMD,3195,MEC,EGG,OFF")
+            self.comm.send("CMD,1093,MEC,EGG,OFF")
             self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
 
     # payload release
@@ -307,11 +321,11 @@ class GCS(QMainWindow):
     def payload(self):
         if self.pl == False:
             self.pl = True
-            # self.comm.send("CMD,3195,MEC,PROBE,ON")
+            self.comm.send("CMD,1093,MEC,PROBE,ON")
             self.probe_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         else:
             self.pl = False
-            # self.comm.send("CMD,3195,MEC,PROBE,OFF")
+            self.comm.send("CMD,1093,MEC,PROBE,OFF")
             self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
 
     # ACS
@@ -319,11 +333,11 @@ class GCS(QMainWindow):
     def acs_sys(self):
         if self.sys == False:
             self.sys = True
-            # self.comm.send("CMD,3195,MEC,ACS,ON")
+            self.comm.send("CMD,1093,MEC,ACS,ON")
             self.acs.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         else:
             self.sys = False
-            # self.comm.send("CMD,3195,MEC,ACS,OFF")
+            self.comm.send("CMD,1093,MEC,ACS,OFF")
             self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
 
     

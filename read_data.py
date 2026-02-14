@@ -1,43 +1,56 @@
 import serial
 import csv
+import threading
+import time
+# do i need to import time??
 
 # add more error mitigation 
-
 class live_read():
-    start = False
+    def __init__(self, port='COM8', baud=115200):
+        self.start = False
+        self.simEnabled = False
+        self.simulation = False
+        self.csv_filename = 'Vortex_1093.csv'
 
-    # making lists for individual variables
-    team = []
-    time = []
-    pckt = []
-    mode = []
-    state = []
-    alt = []
-    temp = []
-    press = []
-    volt = []
-    curr = []
-    g_roll = []
-    g_pitch = []
-    g_yaw = []
-    a_roll =[]
-    a_pitch = []
-    a_yaw = []
-    gps_time = []
-    gps_alt = []
-    lat = []
-    lon = []
-    sats = []
-    cmd = []
+        try:
+            self.ser = serial.Serial(port, baud, timeout=2)
+            print(f"Connected to {port}")
+        except serial.SerialException:
+            print(f"ERROR: Could not open {port}")
+            self.ser = None
+            # making lists for individual variables
+        
+        self.team = []
+        self.time = []
+        self.pckt = []
+        self.mode = []
+        self.state = []
+        self.alt = []
+        self.temp = []
+        self.press = []
+        self.volt = []
+        self.curr = []
+        self.g_roll = []
+        self.g_pitch = []
+        self.g_yaw = []
+        self.a_roll =[]
+        self.a_pitch = []
+        self.a_yaw = []
+        self.gps_time = []
+        self.gps_alt = []
+        self.lat = []
+        self.lon = []
+        self.sats = []
+        self.cmd = []
 
     def start_read(self):
         self.start = True
-        self.read = serial.Serial('COM13', 115200, timeout=2) #COM is subject to change
+        # SET UP COM TO BE AN INPUT OPTION?
 
     def update(self):
-        with self.read:
+        # with self.serial.readline():
             if self.start == True:
-                data = self.read.readline().decode('UTF-8', errors='ignore').strip()
+                data = self.ser.readline().decode('UTF-8', errors='ignore').strip()
                 if data is not None:
                         first_list = data.split(',,')
                         req_list = first_list[0]
@@ -77,8 +90,33 @@ class live_read():
                             self.sats.append(int(data_list[20]))
                             self.cmd.append(data_list[21])
     
+    # TEST THAT THIS ACTUALLY WORKS
+    def send(self,command):
+        try:
+            # self.write = serial.Serial('COM6', 115200, timeout=2) #COM is subject to change
+            self.ser.write(command.encode('UTF-8'))
+        except:
+            print('Port not found')
+        print(command)
+
+    def start_sim(self, csv_filename):
+        self.simulation = True
+        self.sim_thread = threading.Thread(target=self.run_sim, args=(csv_filename,), daemon=True)
+        self.sim_thread.start()
+
+    def run_sim(self, csv_filename):
+        with open(csv_filename, mode='r') as file:
+            csv_reader = csv.reader(file)
+            next(csv_reader, None) # skips header if present
+            for line in csv_reader:
+                if not self.simulation: # sim is disabled
+                    break
+                if line and line [0] == 'CMD': # a command has been sent
+                    line[1] = '1093'
+                    command = ','.join(line) # joins packet separated by commas
+                    self.send(command)
     
-    
-    def send_command(self):
-        command = 
-        self.serial.write(command.encode('utf-8'))
+    def stop_sim(self, command):
+        self.simulation = False
+
+    # add individual get functions for things on lists??
