@@ -7,16 +7,13 @@
 import sys
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets 
-from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QTimer
 from pyqtgraph import PlotWidget, mkPen, LegendItem
-import folium
 from io import BytesIO
 from read_data import live_read
-import serial
-import matplotlib # UV INSTALL THIS SO ETHAN CAN ACCESS
+import matplotlib 
 matplotlib.use('QT5Agg')
 import matplotlib.pylab as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -132,21 +129,8 @@ class GCS(QMainWindow):
         # graph side layout
         graph_layout = QGridLayout()
         graph_layout.setSpacing(5)
-
-        # # TEMPORARY FOR VISUAL PURPOSES
-        # latitude = [38.37583] 
-        # longitude = [-79.6078] 
-        # GPS = folium.Map(location = [latitude[0], longitude[0]], zoom_start=13) 
-        # icon = folium.CustomIcon('ufo.png', icon_size = (75,75)) 
-        # folium.Marker(location = [latitude[0], longitude[0]], popup = 'Payload', icon = icon).add_to(GPS) 
-        # data = BytesIO()
-        # GPS.save(data,close_file = False)
-        # html = data.getvalue().decode()
-        # webView = QWebEngineView(self)
-        # webView.setHtml(html) 
         
         # setting time
-        # self.time = [0]
         self.time = list(range(10))
 
         # creating 3D plot
@@ -254,7 +238,6 @@ class GCS(QMainWindow):
         info_layout = QHBoxLayout()
         
         # adding information to the info layout
-        # make sure to actually fill in with variables later
         self.fsw = QLabel('FSW State: ')
         self.fsw.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         info_layout.addWidget(self.fsw, 50)
@@ -284,7 +267,6 @@ class GCS(QMainWindow):
         # starting timer for updates
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.apply_update)
-        # self.time = [0]
 
     # MAKING CODE TO UPDATE GRAPHS
     def apply_update(self):
@@ -409,6 +391,9 @@ class GCS(QMainWindow):
         self.gpitch_line.setData(self.time, self.gyro_pitch)
         self.gyaw_line.setData(self.time, self.gyro_yaw)
 
+        # CODE TO UPDATE 3D PLOT
+
+
     # MAKING BUTTON COMMANDS
     # cx_on
     def start_cx(self):
@@ -502,7 +487,6 @@ class GCS(QMainWindow):
             self.sys = False
             self.comm.send("CMD,1093,MEC,ACS,OFF\n")
             self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-
     
 # opening main window
 if __name__ == "__main__":

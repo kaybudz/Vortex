@@ -6,9 +6,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "folium>=0.20.0",
+    "matplotlib>=3.10.8",
     "pyqt5>=5.0",
     "pyqtgraph>=0.14.0",
-    "pyqtwebengine==5.15.2; platform_machine != 'aarch64'",
     "pyserial>=3.5",
 ]
 
