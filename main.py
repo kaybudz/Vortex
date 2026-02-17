@@ -11,7 +11,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
-from pyqtgraph import PlotWidget
+from pyqtgraph import PlotWidget, mkPen
 import folium
 from io import BytesIO
 from read_data import live_read
@@ -21,6 +21,7 @@ matplotlib.use('QT5Agg')
 import matplotlib.pylab as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+import time
 
 dark_blue = QtGui.QColor(0, 107, 163)
 class GCS(QMainWindow):
@@ -143,6 +144,9 @@ class GCS(QMainWindow):
         # html = data.getvalue().decode()
         # webView = QWebEngineView(self)
         # webView.setHtml(html) 
+        
+        # setting time
+        self.time = [0]
 
         # creating 3D plot
         location = Figure(constrained_layout=True) # still cant see z axis
@@ -158,77 +162,81 @@ class GCS(QMainWindow):
         frame = QVBoxLayout(loc_frame)
         frame.addWidget(canvas)
 
-        alt_graph = PlotWidget() # placeholder graphs
-        alt_graph.setBackground('white')
-        alt_graph.setStyleSheet('border: 5px solid #006ba3')
-        alt_graph.setTitle('Altitude', color = 'k', **{'font-size':'14pt', 'font-family':'Times New Roman'})
-        alt_graph.setLabel("left", "Altitude (m)", color = "k", **{'font-size':'12pt'})
-        alt_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
-        alt_graph.showGrid(x=True, y=True)
-        # alt_graph.setStyleSheet('text-size: 16px; text-weight: bold')
+        # altitude graph
+        self.alt_graph = PlotWidget() # placeholder graphs
+        self.alt_graph.setBackground('white')
+        self.alt_graph.setStyleSheet('border: 5px solid #006ba3')
+        self.alt_graph.setTitle('Altitude', color = 'k', **{'font-size':'14pt', 'font-family':'Times New Roman'})
+        self.alt_graph.setLabel("left", "Altitude (m)", color = "k", **{'font-size':'12pt'})
+        self.alt_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
+        self.alt_graph.showGrid(x=True, y=True)
 
-        volt_graph = PlotWidget() # placeholder graphs
-        volt_graph.setBackground('white')
-        volt_graph.setStyleSheet('border: 5px solid #006ba3')
-        volt_graph.setTitle('Voltage', color = 'k', **{'font-size':'14pt'})
-        volt_graph.setLabel("left", "Voltage (V)", color = "k", **{'font-size':'12pt'})
-        volt_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
-        volt_graph.showGrid(x=True, y=True)
+        # voltage graph
+        self.volt_graph = PlotWidget() # placeholder graphs
+        self.volt_graph.setBackground('white')
+        self.volt_graph.setStyleSheet('border: 5px solid #006ba3')
+        self.volt_graph.setTitle('Voltage', color = 'k', **{'font-size':'14pt'})
+        self.volt_graph.setLabel("left", "Voltage (V)", color = "k", **{'font-size':'12pt'})
+        self.volt_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
+        self.volt_graph.showGrid(x=True, y=True)
 
-        curr_graph = PlotWidget() # placeholder graphs
-        curr_graph.setBackground('white')
-        curr_graph.setStyleSheet('border: 5px solid #006ba3')
-        curr_graph.setTitle('Current', color = 'k', **{'font-size':'14pt'})
-        curr_graph.setLabel("left", "Current (A)", color = "k", **{'font-size':'12pt'})
-        curr_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
-        curr_graph.showGrid(x=True, y=True)
+        # current graph
+        self.curr_graph = PlotWidget() # placeholder graphs
+        self.curr_graph.setBackground('white')
+        self.curr_graph.setStyleSheet('border: 5px solid #006ba3')
+        self.curr_graph.setTitle('Current', color = 'k', **{'font-size':'14pt'})
+        self.curr_graph.setLabel("left", "Current (A)", color = "k", **{'font-size':'12pt'})
+        self.curr_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
+        self.curr_graph.showGrid(x=True, y=True)
 
-        accel_graph = PlotWidget() # placeholder graphs
-        accel_graph.setBackground('white')
-        accel_graph.setStyleSheet('border: 5px solid #006ba3')
-        accel_graph.setTitle('Acceleration', color = 'k', **{'font-size':'14pt'})
-        accel_graph.setLabel("left", "Acceleration (deg/s^2)", color = "k", **{'font-size':'12pt'})
-        accel_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
-        accel_graph.showGrid(x=True, y=True)
+        # acceleration graph
+        self.accel_graph = PlotWidget() # placeholder graphs
+        self.accel_graph.setBackground('white')
+        self.accel_graph.setStyleSheet('border: 5px solid #006ba3')
+        self.accel_graph.setTitle('Acceleration', color = 'k', **{'font-size':'14pt'})
+        self.accel_graph.setLabel("left", "Acceleration (deg/s^2)", color = "k", **{'font-size':'12pt'})
+        self.accel_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
+        self.accel_graph.showGrid(x=True, y=True)
 
-        gyro_graph = PlotWidget() # placeholder graphs
-        gyro_graph.setBackground('white')
-        gyro_graph.setStyleSheet('border: 5px solid #006ba3')
-        gyro_graph.setTitle('Rotation', color = 'k', **{'font-size':'14pt'})
-        gyro_graph.setLabel("left", "Rotation (deg/s)", color = "k", **{'font-size':'12pt'})
-        gyro_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
-        gyro_graph.showGrid(x=True, y=True)
+        # rotation graph
+        self.gyro_graph = PlotWidget() # placeholder graphs
+        self.gyro_graph.setBackground('white')
+        self.gyro_graph.setStyleSheet('border: 5px solid #006ba3')
+        self.gyro_graph.setTitle('Rotation', color = 'k', **{'font-size':'14pt'})
+        self.gyro_graph.setLabel("left", "Rotation (deg/s)", color = "k", **{'font-size':'12pt'})
+        self.gyro_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
+        self.gyro_graph.showGrid(x=True, y=True)
 
         # TEMPORARY FIX
-        alt_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
-        volt_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
-        curr_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
-        accel_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
-        gyro_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
+        self.alt_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
+        self.volt_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
+        self.curr_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
+        self.accel_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
+        self.gyro_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
 
         # adding graphs to graph layout
         #graph_layout.addWidget(webView, 0, 0)
         graph_layout.addWidget(loc_frame, 0, 0), canvas.draw()
-        graph_layout.addWidget(alt_graph, 0, 1)
-        graph_layout.addWidget(volt_graph, 0, 2)
-        graph_layout.addWidget(curr_graph, 1, 0)
-        graph_layout.addWidget(accel_graph, 1, 1)
-        graph_layout.addWidget(gyro_graph, 1, 2)
+        graph_layout.addWidget(self.alt_graph, 0, 1)
+        graph_layout.addWidget(self.volt_graph, 0, 2)
+        graph_layout.addWidget(self.curr_graph, 1, 0)
+        graph_layout.addWidget(self.accel_graph, 1, 1)
+        graph_layout.addWidget(self.gyro_graph, 1, 2)
 
         # creating a line above the graphs to display additional information
         info_layout = QHBoxLayout()
         
         # adding information to the info layout
         # make sure to actually fill in with variables later
-        fsw = QLabel('FSW State: ')
-        fsw.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-        info_layout.addWidget(fsw, 50)
-        echo = QLabel('CMD Echo: ')
-        echo.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-        info_layout.addWidget(echo, 50)
-        velocity = QLabel('Velocity (m/s): ')
-        velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-        info_layout.addWidget(velocity, 50)
+        self.fsw = QLabel('FSW State: ')
+        self.fsw.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+        info_layout.addWidget(self.fsw, 50)
+        self.echo = QLabel('CMD Echo: ')
+        self.echo.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+        info_layout.addWidget(self.echo, 50)
+        self.velocity = QLabel('Velocity (m/s): ')
+        self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+        info_layout.addWidget(self.velocity, 50)
         
         # put everything into one layout, numbers are for sizing ratios
         base_layout.addLayout(data_layout, 30)
@@ -238,34 +246,135 @@ class GCS(QMainWindow):
         final_layout.addLayout(info_layout)
         final_layout.addLayout(base_layout)
 
-        # set data read to false
+        # set initial conditions
         self.data_read = False
         self.comm = live_read()
+        self.probe = 0 # tells us  the payload has not been released from the container
+        self.egg = 0 # tells us the egg has not been released from the payload
+        self.r_packet = 0 # recieved packet count
+        self.l_packet = 0 # lost packet count
 
-        # MAKING CODE TO UPDATE GRAPHS
-        # def update_graphs(self):
-        #     c
+    # MAKING CODE TO UPDATE GRAPHS
+    def apply_update(self):
+        # print statement for testing purposes
+        print('New data added')
+
+        self.comm.update()
+        # updating data table
+        self.data_table.setItem(0, 0, QTableWidgetItem(self.comm.time[-1])) # mission time
         
-    # MAKING BUTTON COMMANDS
-    # MAKE THE COMMANDS ACTUALLY SEND
+        # packet counts
+        self.r_packet = self.r_packet # recieved packet count
+        self.l_packet = self.l_packet # lost packet count
+        if self.comm.pckt[-1] - self.comm.pckt[-2] == 1:
+            if self.r_packet == 0:
+                self.r_packet = self.r_packet + 2
+            else:
+                self.r_packet = self.r_packet + 1
+        else:
+            if self.l_packet == 0:
+                self.l_packet = self.l_packet + 1
+            else:
+                self.l_packet = self.l_packet + 1
+        self.data_table.setItem(0, 1, QTableWidgetItem(str(self.r_packet))) 
+        self.data_table.setItem(0, 2, QTableWidgetItem(str(self.l_packet)))
 
+        # payload release
+        if self.probe == 0:
+            self.data_table.setItem(0, 3, QTableWidgetItem('N'))
+        elif self.probe == 1:
+            self.data_table.setItem(0, 3, QTableWidgetItem('Y'))
+
+        # egg release
+        if self.egg == 0:
+            self.data_table.setItem(0, 4, QTableWidgetItem('N'))
+        elif self.egg == 1:
+            self.data_table.setItem(0, 4, QTableWidgetItem('Y'))
+        
+        self.data_table.setItem(0, 5, QTableWidgetItem(self.comm.temp[-1])) # temperature
+        self.data_table.setItem(0, 6, QTableWidgetItem(self.comm.lat[-1])) # latitude
+        self.data_table.setItem(0, 7, QTableWidgetItem(self.comm.lon[-1])) # longitude
+        self.data_table.setItem(0, 8, QTableWidgetItem(self.comm.sats[-1])) # satellites
+
+        # updating top line
+        # fsw label
+        self.fsw.setText('FSW State: ' + self.comm.state[-1])
+        if self.comm.state[-1] == 'LAUNCH_PAD':
+            self.fsw.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+        elif self.comm.state[-1] == 'ASCENT':
+            self.fsw.setStyleSheet('background-color: orange; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+        elif self.comm.state[-1] == 'APOGEE':
+            self.fsw.setStyleSheet('background-color: yellow; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+        elif self.comm.state[-1] == 'DESCENT':
+            self.fsw.setStyleSheet('background-color: green; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+        elif self.comm.state[-1] == 'PROBE_RELEASE':
+            self.fsw.setStyleSheet('background-color: blue; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.probe = 1 # tells us the payload has been released from the container
+        elif self.comm.state[-1] == 'PAYLOAD RELEASE':
+            self.fsw.setStyleSheet('background-color: purple; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.egg = 1 # tells us the egg has been released from the payload
+        elif self.comm.state[-1] == 'LANDED':
+            self.fsw.setStyleSheet('background-color: pink; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+
+        # cmd echo label
+        self.echo.setText('CMD Echo: ' + self.comm.cmd[-1])
+
+        # velocity label
+        if self.comm.state[-1] == 'DESCENT':
+            if self.probe == 0:
+                if (self.comm.alt[-1] - self.comm.alt[-2]) >= 12 and (self.comm.alt[-1] - self.comm.alt[-2]) <= 18:
+                    self.velocity.setStyleSheet('background-color: green; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+                elif (self.comm.alt[-1] - self.comm.alt[-2]) <= 12 or (self.comm.alt[-1] - self.comm.alt[-2]) >= 18:
+                    self.velocity.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            elif self.probe == 1:
+                if (self.comm.alt[-1] - self.comm.alt[-2]) >= 2 and (self.comm.alt[-1] - self.comm.alt[-2]) <= 8 and self.probe == 1:
+                    self.velocity.setStyleSheet('background-color: green; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+                elif (self.comm.alt[-1] - self.comm.alt[-2]) <= 2 or (self.comm.alt[-1] - self.comm.alt[-2]) >= 8 and self.probe == 1: 
+                    self.velocity.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            else:
+                self.velocity.setStyleSheet('background-color: white; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+        self.velocity.setText('Velocity (m/s): ' + str(self.comm.alt[-1] - self.comm.alt[-2]))
+
+        # setting time for graphs
+        self.time = self.time[1:]
+        self.time.append(self.time[-1] + 1)
+
+        # updating graphs
+        self.alt_line = self.alt_graph.plot(self.time, self.comm.alt[-1], pen=mkPen('k'))
+        self.volt_line = self.volt_graph.plot(self.time, self.comm.volt[-1], pen=mkPen('k'))
+        self.curr_line = self.curr_graph.plot(self.time, self.comm.curr[-1], pen=mkPen('k'))
+        
+        self.aroll_line = self.accel_graph.plot(self.time, self.comm.a_roll[-1], pen='r', name='Accel Roll')
+        self.apitch_line = self.accel_graph.plot(self.time, self.comm.a_pitch[-1], pen='g', name='Accel Pitch')
+        self.ayaw_line = self.accel_graph.plot(self.time, self.comm.a_yaw[-1], pen='b', name='Accel Yaw')
+
+        self.groll_line = self.gyro_graph.plot(self.time, self.comm.g_roll[-1], pen='r', name='Gyro Roll')
+        self.gpitch_line = self.gyro_graph.plot(self.time, self.comm.g_pitch[-1], pen='g', name='Gyro Pitch')
+        self.gyaw_line = self.gyro_graph.plot(self.time, self.comm.g_yaw[-1], pen='b', name='Gyro Yaw')
+
+    # MAKING BUTTON COMMANDS
     # cx_on
     def start_cx(self):
         self.data_read = True
-        self.comm.send('CMD,1093,CX,ON')
+        self.comm.send('CMD,1093,CX,ON\n')
         self.cx_on.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.cx_off.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.apply_update()
+        # self.timer = QtCore.QTimer()
+        # self.timer.setInterval(300)
+        # self.timer.timeout.connect(self.apply_update)
+        # self.timer.start()
 
     # cx_off
     def stop_cx(self):
         self.data_read = False
-        self.comm.send('CMD,1093,CX,OFF')
+        self.comm.send('CMD,1093,CX,OFF\n')
         self.cx_off.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
     
     # set time
     def time_set(self):
-        self.comm.send('CMD,1093,ST,UTC')
+        self.comm.send('CMD,1093,ST,UTC\n')
         self.data_table.setItem(0, 0, QTableWidgetItem('00:00:00'))
         # self.data_table.setItem(0, 0, QTableWidgetItem(time[-1]))
         self.set_time.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
@@ -273,35 +382,34 @@ class GCS(QMainWindow):
     # sim enable
     def sim_e(self):
         self.comm.simEnabled = True
-        self.comm.send('CMD,1093,SIM,ENABLE')
+        self.comm.send('CMD,1093,SIM,ENABLE\n')
         self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-
 
     # sim activate
     def sim_a(self):
         self.comm.simulation = True
         if self.comm.simEnabled:
             self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-            self.comm.send('CMD,1093,SIM,ACTIVATE')
-            # csv_filename = self.comm.csv_filename
-            # # code to read CSV file
-            # if csv_filename:
-            #     self.comm.run_sim(self, csv_filename)   
+            self.comm.send('CMD,1093,SIM,ACTIVATE\n')
+            csv_filename = self.comm.csv_filename
+            # code to read CSV file
+            if csv_filename:
+                self.comm.run_sim(csv_filename)   
 
     # sim disable
     def sim_d(self):
         self.comm.simulation = False
         self.comm.simEnabled = False
         self.comm.stop_sim(self)
-        self.comm.send("CMD,1093,SIM,DISABLE")
+        self.comm.send("CMD,1093,SIM,DISABLE\n")
         self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
     
     # calibration
     def cal(self):
-        self.comm.send("CMD,1093,CAL")
+        self.comm.send("CMD,1093,CAL\n")
         self.calibrate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
     
     # egg drop
@@ -309,11 +417,11 @@ class GCS(QMainWindow):
     def egg_drop(self):
         if self.egg == False:
             self.egg = True
-            self.comm.send("CMD,1093,MEC,EGG,ON")
+            self.comm.send("CMD,1093,MEC,EGG,ON\n")
             self.egg_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         else:
             self.egg = False
-            self.comm.send("CMD,1093,MEC,EGG,OFF")
+            self.comm.send("CMD,1093,MEC,EGG,OFF\n")
             self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
 
     # payload release
@@ -321,11 +429,11 @@ class GCS(QMainWindow):
     def payload(self):
         if self.pl == False:
             self.pl = True
-            self.comm.send("CMD,1093,MEC,PROBE,ON")
+            self.comm.send("CMD,1093,MEC,PROBE,ON\n")
             self.probe_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         else:
             self.pl = False
-            self.comm.send("CMD,1093,MEC,PROBE,OFF")
+            self.comm.send("CMD,1093,MEC,PROBE,OFF\n")
             self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
 
     # ACS
@@ -333,11 +441,11 @@ class GCS(QMainWindow):
     def acs_sys(self):
         if self.sys == False:
             self.sys = True
-            self.comm.send("CMD,1093,MEC,ACS,ON")
+            self.comm.send("CMD,1093,MEC,ACS,ON\n")
             self.acs.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         else:
             self.sys = False
-            self.comm.send("CMD,1093,MEC,ACS,OFF")
+            self.comm.send("CMD,1093,MEC,ACS,OFF\n")
             self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
 
     

@@ -18,30 +18,31 @@ class live_read():
         except serial.SerialException:
             print(f"ERROR: Could not open {port}")
             self.ser = None
-            # making lists for individual variables
-        
-        self.team = []
-        self.time = []
-        self.pckt = []
-        self.mode = []
-        self.state = []
-        self.alt = []
-        self.temp = []
-        self.press = []
-        self.volt = []
-        self.curr = []
-        self.g_roll = []
-        self.g_pitch = []
-        self.g_yaw = []
-        self.a_roll =[]
-        self.a_pitch = []
-        self.a_yaw = []
-        self.gps_time = []
-        self.gps_alt = []
-        self.lat = []
-        self.lon = []
-        self.sats = []
-        self.cmd = []
+            
+        # making lists for individual variables
+        # initial conditions are example packet from launchpad
+        self.team = ['1093']
+        self.time = ['13:39:12']
+        self.pckt = [1,2,3,4,5]
+        self.mode = ['F']
+        self.state = ['DESCENT']
+        self.alt = [0.0,13.0]
+        self.temp = ['30.1']
+        self.press = ['9550.5']
+        self.volt = ['10.4']
+        self.curr = ['2.53']
+        self.g_roll = ['0']
+        self.g_pitch = ['0']
+        self.g_yaw = ['0']
+        self.a_roll =['0']
+        self.a_pitch = ['0']
+        self.a_yaw = ['0']
+        self.gps_time = ['13:39:11']
+        self.gps_alt = ['0.4']
+        self.lat = ['38.2201']
+        self.lon = ['79.3601']
+        self.sats = ['6']
+        self.cmd = ['CMD1093CAL']
 
     def start_read(self):
         self.start = True
@@ -96,7 +97,7 @@ class live_read():
             # self.write = serial.Serial('COM6', 115200, timeout=2) #COM is subject to change
             self.ser.write(command.encode('UTF-8'))
         except:
-            print('Port not found')
+            print('ERROR: Port not found')
         print(command)
 
     def start_sim(self, csv_filename):
