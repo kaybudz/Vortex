@@ -10,8 +10,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtCore import Qt
-from pyqtgraph import PlotWidget, mkPen
+from PyQt5.QtCore import Qt, QTimer
+from pyqtgraph import PlotWidget, mkPen, LegendItem
 import folium
 from io import BytesIO
 from read_data import live_read
@@ -146,7 +146,8 @@ class GCS(QMainWindow):
         # webView.setHtml(html) 
         
         # setting time
-        self.time = [0]
+        # self.time = [0]
+        self.time = list(range(10))
 
         # creating 3D plot
         location = Figure(constrained_layout=True) # still cant see z axis
@@ -170,6 +171,7 @@ class GCS(QMainWindow):
         self.alt_graph.setLabel("left", "Altitude (m)", color = "k", **{'font-size':'12pt'})
         self.alt_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
         self.alt_graph.showGrid(x=True, y=True)
+        self.alt_graph.setMouseEnabled(x=False, y=False)
 
         # voltage graph
         self.volt_graph = PlotWidget() # placeholder graphs
@@ -179,6 +181,7 @@ class GCS(QMainWindow):
         self.volt_graph.setLabel("left", "Voltage (V)", color = "k", **{'font-size':'12pt'})
         self.volt_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
         self.volt_graph.showGrid(x=True, y=True)
+        self.volt_graph.setMouseEnabled(x=False, y=False)
 
         # current graph
         self.curr_graph = PlotWidget() # placeholder graphs
@@ -188,6 +191,7 @@ class GCS(QMainWindow):
         self.curr_graph.setLabel("left", "Current (A)", color = "k", **{'font-size':'12pt'})
         self.curr_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
         self.curr_graph.showGrid(x=True, y=True)
+        self.curr_graph.setMouseEnabled(x=False, y=False)
 
         # acceleration graph
         self.accel_graph = PlotWidget() # placeholder graphs
@@ -197,7 +201,8 @@ class GCS(QMainWindow):
         self.accel_graph.setLabel("left", "Acceleration (deg/s^2)", color = "k", **{'font-size':'12pt'})
         self.accel_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
         self.accel_graph.showGrid(x=True, y=True)
-
+        self.accel_graph.setMouseEnabled(x=False, y=False)
+    
         # rotation graph
         self.gyro_graph = PlotWidget() # placeholder graphs
         self.gyro_graph.setBackground('white')
@@ -206,6 +211,7 @@ class GCS(QMainWindow):
         self.gyro_graph.setLabel("left", "Rotation (deg/s)", color = "k", **{'font-size':'12pt'})
         self.gyro_graph.setLabel("bottom", "Time (s)", color = "k", **{'font-size':'12pt'})
         self.gyro_graph.showGrid(x=True, y=True)
+        self.gyro_graph.setMouseEnabled(x=False, y=False)
 
         # TEMPORARY FIX
         self.alt_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
@@ -214,8 +220,29 @@ class GCS(QMainWindow):
         self.accel_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
         self.gyro_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
 
+        # establishing graph lines
+        self.alt_line = self.alt_graph.plot([], [], pen='k')
+        self.volt_line = self.volt_graph.plot([], [], pen='k')
+        self.curr_line = self.curr_graph.plot([], [], pen='k')
+
+        self.accel_graph.addLegend(offset=(1,1))
+        alegend = LegendItem()                      
+        alegend.setParentItem(self.accel_graph.graphicsItem()) 
+        alegend.anchor((0, 1), (0, 1))
+        self.aroll_line = self.accel_graph.plot([], [], pen='r', name='Roll')
+        self.apitch_line = self.accel_graph.plot([], [], pen='g', name='Pitch')
+        self.ayaw_line = self.accel_graph.plot([], [], pen='b', name='Yaw')
+        
+        self.gyro_graph.addLegend(offset=(1,1))
+        glegend = LegendItem()                      
+        glegend.setParentItem(self.gyro_graph.graphicsItem()) 
+        glegend.anchor((0, 1), (0, 1))
+        self.groll_line = self.gyro_graph.plot([], [], pen='r', name='Roll')
+        self.gpitch_line = self.gyro_graph.plot([], [], pen='g', name='Pitch')
+        self.gyaw_line = self.gyro_graph.plot([], [], pen='b', name='Yaw')
+
         # adding graphs to graph layout
-        #graph_layout.addWidget(webView, 0, 0)
+        # graph_layout.addWidget(webView, 0, 0)
         graph_layout.addWidget(loc_frame, 0, 0), canvas.draw()
         graph_layout.addWidget(self.alt_graph, 0, 1)
         graph_layout.addWidget(self.volt_graph, 0, 2)
@@ -254,28 +281,33 @@ class GCS(QMainWindow):
         self.r_packet = 0 # recieved packet count
         self.l_packet = 0 # lost packet count
 
+        # starting timer for updates
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.apply_update)
+        # self.time = [0]
+
     # MAKING CODE TO UPDATE GRAPHS
     def apply_update(self):
         # print statement for testing purposes
-        print('New data added')
-
+        # print('New data added')
         self.comm.update()
+        self.timer.start(1000)
+
         # updating data table
-        self.data_table.setItem(0, 0, QTableWidgetItem(self.comm.time[-1])) # mission time
-        
-        # packet counts
-        self.r_packet = self.r_packet # recieved packet count
-        self.l_packet = self.l_packet # lost packet count
-        if self.comm.pckt[-1] - self.comm.pckt[-2] == 1:
-            if self.r_packet == 0:
-                self.r_packet = self.r_packet + 2
+        self.data_table.setItem(0, 0, QTableWidgetItem(str(self.comm.time[-1]))) # mission time
+
+        # updating packet count
+        if self.comm.pckt[-1] != self.comm.pckt[-2]:
+            if self.comm.pckt[-1] - self.comm.pckt[-2] == 1:
+                if self.r_packet == 0:
+                    self.r_packet = self.r_packet + 2
+                else:
+                    self.r_packet = self.r_packet + 1
             else:
-                self.r_packet = self.r_packet + 1
-        else:
-            if self.l_packet == 0:
-                self.l_packet = self.l_packet + 1
-            else:
-                self.l_packet = self.l_packet + 1
+                if self.l_packet == 0:
+                    self.l_packet = self.l_packet + 1
+                else:
+                    self.l_packet = self.l_packet + 1
         self.data_table.setItem(0, 1, QTableWidgetItem(str(self.r_packet))) 
         self.data_table.setItem(0, 2, QTableWidgetItem(str(self.l_packet)))
 
@@ -291,14 +323,14 @@ class GCS(QMainWindow):
         elif self.egg == 1:
             self.data_table.setItem(0, 4, QTableWidgetItem('Y'))
         
-        self.data_table.setItem(0, 5, QTableWidgetItem(self.comm.temp[-1])) # temperature
-        self.data_table.setItem(0, 6, QTableWidgetItem(self.comm.lat[-1])) # latitude
-        self.data_table.setItem(0, 7, QTableWidgetItem(self.comm.lon[-1])) # longitude
-        self.data_table.setItem(0, 8, QTableWidgetItem(self.comm.sats[-1])) # satellites
+        self.data_table.setItem(0, 5, QTableWidgetItem(str(self.comm.temp[-1]))) # temperature
+        self.data_table.setItem(0, 6, QTableWidgetItem(str(self.comm.lat[-1]))) # latitude
+        self.data_table.setItem(0, 7, QTableWidgetItem(str(self.comm.lon[-1]))) # longitude
+        self.data_table.setItem(0, 8, QTableWidgetItem(str(self.comm.sats[-1]))) # satellites
 
         # updating top line
         # fsw label
-        self.fsw.setText('FSW State: ' + self.comm.state[-1])
+        self.fsw.setText('FSW State: ' + str(self.comm.state[-1]))
         if self.comm.state[-1] == 'LAUNCH_PAD':
             self.fsw.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         elif self.comm.state[-1] == 'ASCENT':
@@ -310,14 +342,14 @@ class GCS(QMainWindow):
         elif self.comm.state[-1] == 'PROBE_RELEASE':
             self.fsw.setStyleSheet('background-color: blue; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.probe = 1 # tells us the payload has been released from the container
-        elif self.comm.state[-1] == 'PAYLOAD RELEASE':
+        elif self.comm.state[-1] == 'PAYLOAD_RELEASE':
             self.fsw.setStyleSheet('background-color: purple; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.egg = 1 # tells us the egg has been released from the payload
         elif self.comm.state[-1] == 'LANDED':
             self.fsw.setStyleSheet('background-color: pink; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
 
         # cmd echo label
-        self.echo.setText('CMD Echo: ' + self.comm.cmd[-1])
+        self.echo.setText('CMD Echo: ' + str(self.comm.cmd[-1]))
 
         # velocity label
         if self.comm.state[-1] == 'DESCENT':
@@ -340,17 +372,42 @@ class GCS(QMainWindow):
         self.time.append(self.time[-1] + 1)
 
         # updating graphs
-        self.alt_line = self.alt_graph.plot(self.time, self.comm.alt[-1], pen=mkPen('k'))
-        self.volt_line = self.volt_graph.plot(self.time, self.comm.volt[-1], pen=mkPen('k'))
-        self.curr_line = self.curr_graph.plot(self.time, self.comm.curr[-1], pen=mkPen('k'))
-        
-        self.aroll_line = self.accel_graph.plot(self.time, self.comm.a_roll[-1], pen='r', name='Accel Roll')
-        self.apitch_line = self.accel_graph.plot(self.time, self.comm.a_pitch[-1], pen='g', name='Accel Pitch')
-        self.ayaw_line = self.accel_graph.plot(self.time, self.comm.a_yaw[-1], pen='b', name='Accel Yaw')
+        # altitude
+        self.altitude = [self.comm.alt[-1] for _ in range(10)]
+        self.comm.alt = self.comm.alt[1:]
+        self.alt_line.setData(self.time, self.altitude)
 
-        self.groll_line = self.gyro_graph.plot(self.time, self.comm.g_roll[-1], pen='r', name='Gyro Roll')
-        self.gpitch_line = self.gyro_graph.plot(self.time, self.comm.g_pitch[-1], pen='g', name='Gyro Pitch')
-        self.gyaw_line = self.gyro_graph.plot(self.time, self.comm.g_yaw[-1], pen='b', name='Gyro Yaw')
+        # voltage
+        self.voltage = [self.comm.volt[-1] for _ in range(10)]
+        self.comm.volt = self.comm.volt[1:]
+        self.volt_line.setData(self.time, self.voltage)
+
+        # current
+        self.current = [self.comm.curr[-1] for _ in range(10)]
+        self.comm.curr = self.comm.curr[1:]
+        self.curr_line.setData(self.time, self.current)
+
+        # acceleration
+        self.accel_roll = [self.comm.a_roll[-1] for _ in range(10)]
+        self.accel_pitch = [self.comm.a_pitch[-1] for _ in range(10)]
+        self.accel_yaw = [self.comm.a_yaw[-1] for _ in range(10)]
+        self.comm.a_roll = self.comm.a_roll[1:]
+        self.comm.a_pitch = self.comm.a_pitch[1:]
+        self.comm.a_yaw = self.comm.a_yaw[1:]
+        self.aroll_line.setData(self.time, self.accel_roll)
+        self.apitch_line.setData(self.time, self.accel_pitch)
+        self.ayaw_line.setData(self.time, self.accel_yaw)
+
+        # rotation
+        self.gyro_roll = [self.comm.g_roll[-1] for _ in range(10)]
+        self.gyro_pitch = [self.comm.g_pitch[-1] for _ in range(10)]
+        self.gyro_yaw = [self.comm.g_yaw[-1] for _ in range(10)]
+        self.comm.g_roll = self.comm.g_roll[1:]
+        self.comm.g_pitch = self.comm.g_pitch[1:]
+        self.comm.g_yaw = self.comm.g_yaw[1:]
+        self.groll_line.setData(self.time, self.gyro_roll)
+        self.gpitch_line.setData(self.time, self.gyro_pitch)
+        self.gyaw_line.setData(self.time, self.gyro_yaw)
 
     # MAKING BUTTON COMMANDS
     # cx_on
@@ -359,11 +416,8 @@ class GCS(QMainWindow):
         self.comm.send('CMD,1093,CX,ON\n')
         self.cx_on.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.cx_off.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.comm.start_read()
         self.apply_update()
-        # self.timer = QtCore.QTimer()
-        # self.timer.setInterval(300)
-        # self.timer.timeout.connect(self.apply_update)
-        # self.timer.start()
 
     # cx_off
     def stop_cx(self):
@@ -371,6 +425,7 @@ class GCS(QMainWindow):
         self.comm.send('CMD,1093,CX,OFF\n')
         self.cx_off.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.timer.stop()
     
     # set time
     def time_set(self):

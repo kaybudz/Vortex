@@ -13,7 +13,7 @@ class live_read():
         self.csv_filename = 'Vortex_1093.csv'
 
         try:
-            self.ser = serial.Serial(port, baud, timeout=2)
+            self.ser = serial.Serial(port, baud, timeout=0.1)
             print(f"Connected to {port}")
         except serial.SerialException:
             print(f"ERROR: Could not open {port}")
@@ -21,28 +21,29 @@ class live_read():
             
         # making lists for individual variables
         # initial conditions are example packet from launchpad
-        self.team = ['1093']
-        self.time = ['13:39:12']
-        self.pckt = [1,2,3,4,5]
-        self.mode = ['F']
-        self.state = ['DESCENT']
-        self.alt = [0.0,13.0]
-        self.temp = ['30.1']
-        self.press = ['9550.5']
-        self.volt = ['10.4']
-        self.curr = ['2.53']
-        self.g_roll = ['0']
-        self.g_pitch = ['0']
-        self.g_yaw = ['0']
-        self.a_roll =['0']
-        self.a_pitch = ['0']
-        self.a_yaw = ['0']
-        self.gps_time = ['13:39:11']
-        self.gps_alt = ['0.4']
-        self.lat = ['38.2201']
-        self.lon = ['79.3601']
-        self.sats = ['6']
-        self.cmd = ['CMD1093CAL']
+        self.team = []
+        self.time = []
+        self.pckt = []
+        self.mode = []
+        self.state = []
+        self.alt = []
+        self.temp = []
+        self.press = []
+        self.volt = []
+        self.curr = []
+        self.g_roll = []
+        self.g_pitch = []
+        self.g_yaw = []
+        self.a_roll =[]
+        self.a_pitch = []
+        self.a_yaw = []
+        self.gps_time = []
+        self.gps_alt = []
+        self.lat = []
+        self.lon = []
+        self.sats = []
+        self.cmd = []
+        self.data_list = []
 
     def start_read(self):
         self.start = True
@@ -50,46 +51,51 @@ class live_read():
 
     def update(self):
         # with self.serial.readline():
-            if self.start == True:
-                data = self.ser.readline().decode('UTF-8', errors='ignore').strip()
-                if data is not None:
-                        first_list = data.split(',,')
-                        req_list = first_list[0]
-                        ex_list = first_list[1]
-                        data_list = req_list.split(',')
-                        extra_list = ex_list.split(',')
-                        data_list.append(extra_list[0])
-                        data_list.append(extra_list[1])
-                        with open("Vortex_1093.csv", mode = 'a', newline = '') as file:
-                            writer = csv.writer(file)
-                            writer.writerow(data_list)
-                        
-                        # separating main data list into individual lists
-                        if len(data_list) >= 22:
-                            #print(data_list)
-                            #print('data is updating')
-                            self.team.append(int(data_list[0]))
-                            self.time.append(data_list[1])
-                            self.pckt.append(int(data_list[2]))
-                            self.mode.append(data_list[3])
-                            self.state.append(data_list[4])
-                            self.alt.append(float(data_list[5]))
-                            self.temp.append(float(data_list[6]))
-                            self.press.append(float(data_list[7]))
-                            self.volt.append(float(data_list[8]))
-                            self.curr.append(float(data_list[9]))
-                            self.g_roll.append(float(data_list[10]))
-                            self.g_pitch.append(float(data_list[11]))
-                            self.g_yaw.append(float(data_list[12]))
-                            self.a_roll.append(float(data_list[13]))
-                            self.a_pitch.append(float(data_list[14]))
-                            self.a_yaw.append(float(data_list[15]))
-                            self.gps_time.append(float(data_list[16]))
-                            self.gps_alt.append(float(data_list[17]))
-                            self.lat.append(float(data_list[18]))
-                            self.lon.append(float(data_list[19]))
-                            self.sats.append(int(data_list[20]))
-                            self.cmd.append(data_list[21])
+            #print('update has been run')
+        if self.start == True:
+            data = self.ser.readline().decode('UTF-8', errors='ignore').strip()
+            if data:
+                    #print('data')
+                    # first_list = data.split(',,')
+                    # req_list = first_list[0]
+                    # ex_list = first_list[1]
+                    # data_list = req_list.split(',')
+                    # extra_list = ex_list.split(',')
+                    # data_list.append(extra_list[0])
+                    # data_list.append(extra_list[1])
+                    self.data_list = data.split(',')
+                    with open("Vortex_1093.csv", mode = 'a', newline = '') as file:
+                        writer = csv.writer(file)
+                        writer.writerow(self.data_list)
+                    
+                    # separating main data list into individual lists
+                    if len(self.data_list) >= 22:
+                        #print(data_list)
+                        #print('data is updating')
+                        self.team.append(int(self.data_list[0])) # team ID
+                        self.time.append(self.data_list[1]) # mission time
+                        self.pckt.append(int(self.data_list[2])) # packet count
+                        self.mode.append(self.data_list[3]) # flight or sim mode
+                        self.state.append(self.data_list[4]) # fsw state
+                        self.alt.append(float(self.data_list[5])) # altitude
+                        self.temp.append(float(self.data_list[6])) # temperature
+                        self.press.append(float(self.data_list[7])) # pressure
+                        self.volt.append(float(self.data_list[8])) # voltage
+                        self.curr.append(float(self.data_list[9])) # current
+                        self.g_roll.append(float(self.data_list[10])) # gyro roll
+                        self.g_pitch.append(float(self.data_list[11])) # gyro pitch
+                        self.g_yaw.append(float(self.data_list[12])) # gyro yaw
+                        self.a_roll.append(float(self.data_list[13])) # accel roll
+                        self.a_pitch.append(float(self.data_list[14])) # accel pitch
+                        self.a_yaw.append(float(self.data_list[15])) # accel yaw
+                        self.gps_time.append(float(self.data_list[16])) # gps time
+                        self.gps_alt.append(float(self.data_list[17])) # gps altitude
+                        self.lat.append(float(self.data_list[18])) # latitude
+                        self.lon.append(float(self.data_list[19])) # longitude
+                        self.sats.append(int(self.data_list[20])) # satellites
+                        self.cmd.append(self.data_list[21]) # command echo
+                    else: 
+                        print('ERROR: Packet is too short')
     
     # TEST THAT THIS ACTUALLY WORKS
     def send(self,command):
