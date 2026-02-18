@@ -125,5 +125,3 @@ class live_read():
     
     def stop_sim(self, command):
         self.simulation = False
-
-    # add individual get functions for things on lists??

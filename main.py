@@ -16,6 +16,8 @@ from read_data import live_read
 import matplotlib 
 matplotlib.use('QT5Agg')
 import matplotlib.pylab as plt
+import matplotlib.animation as animation
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import time
@@ -110,9 +112,11 @@ class GCS(QMainWindow):
         self.set_time.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.set_time.clicked.connect(self.time_set)
 
+        # have this come in when landing state is reached?
         # party_mode = QPushButton()
         # party_mode.setText('Party Mode')
         # party_mode.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+
         button_layout.addWidget(self.sim_enable, 0, 0)
         button_layout.addWidget(self.sim_activate, 0, 1)
         button_layout.addWidget(self.sim_disable, 1, 0)
@@ -134,18 +138,21 @@ class GCS(QMainWindow):
         self.time = list(range(10))
 
         # creating 3D plot
-        location = Figure(constrained_layout=True) # still cant see z axis
+        location = Figure() # still cant see z axis constrained_layout=True
         canvas = FigureCanvas(location)
-        loc_graph = location.add_subplot(111, projection='3d')
-        loc_graph.set_xlabel('Latitude(°N)')
-        loc_graph.set_ylabel('Longitude (°E)')
-        loc_graph.set_zlabel('Altitude (m)')
-        loc_graph.set_title('Flight Path')
-        loc_graph.mouse_init(rotate_btn=None, zoom_btn=None) # keeps plot static
+        self.loc_graph = location.add_subplot(111, projection='3d')
+        location.subplots_adjust(left=0, right=0.79, bottom=0.05, top=1)
+        self.loc_graph.set_xlabel('Latitude(°N)', labelpad=2)
+        self.loc_graph.set_ylabel('Longitude (°E)', labelpad=2)
+        self.loc_graph.set_zlabel('Altitude (m)', labelpad=1.5)
+        self.loc_graph.set_title('Flight Path', pad=0)
+        self.loc_graph.mouse_init(rotate_btn=None, zoom_btn=None) # keeps plot static
         loc_frame = QFrame()
         loc_frame.setStyleSheet("background-color: white; border: 5px solid #006ba3")
         frame = QVBoxLayout(loc_frame)
         frame.addWidget(canvas)
+        self.gps_line, = self.loc_graph.plot([], [], [], lw=2)
+        self.loc_graph.scatter(38.37583, -79.6078, 0, c='red', s=50)
 
         # altitude graph
         self.alt_graph = PlotWidget() # placeholder graphs
@@ -226,7 +233,6 @@ class GCS(QMainWindow):
         self.gyaw_line = self.gyro_graph.plot([], [], pen='b', name='Yaw')
 
         # adding graphs to graph layout
-        # graph_layout.addWidget(webView, 0, 0)
         graph_layout.addWidget(loc_frame, 0, 0), canvas.draw()
         graph_layout.addWidget(self.alt_graph, 0, 1)
         graph_layout.addWidget(self.volt_graph, 0, 2)
@@ -354,6 +360,9 @@ class GCS(QMainWindow):
         self.time.append(self.time[-1] + 1)
 
         # updating graphs
+        self.gps_line.set_data([self.comm.lat[-1]], [self.comm.lon[-1]])
+        self.gps_line.set_3d_properties([self.comm.alt[-1]]) # Use set_3d_properties for z data
+    
         # altitude
         self.altitude = [self.comm.alt[-1] for _ in range(10)]
         self.comm.alt = self.comm.alt[1:]
