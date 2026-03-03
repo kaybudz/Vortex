@@ -1,13 +1,10 @@
-# main window for user interface
-# 14 px minimum font size
 # launchpad coordinates 38.37583 deg N, -79.6078 deg E
-# cd96ff
 
 # importing necessary libraries
 import sys
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets 
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame, QComboBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QTimer
 from pyqtgraph import PlotWidget, mkPen, LegendItem
@@ -21,6 +18,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import time
+from party_mode import party
+from playsound import playsound # add sounds to hitting buttons? is there any sort of speaker system with the pi5
 
 dark_blue = QtGui.QColor(0, 107, 163)
 class GCS(QMainWindow):
@@ -36,6 +35,15 @@ class GCS(QMainWindow):
         self.setWindowIcon(QIcon('Vortex_Logo.png'))
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
+
+        # set initial conditions
+        self.data_read = False
+        self.comm = live_read()
+        self.probe = 0 # tells us  the payload has not been released from the container
+        self.egg = 0 # tells us the egg has not been released from the payload
+        self.r_packet = 0 # recieved packet count
+        self.l_packet = 0 # lost packet count
+        self.sys = False # acs system activation, should this be defaulted to true?
 
         # setting up layout and making universal font
         base_layout = QHBoxLayout()
@@ -129,6 +137,17 @@ class GCS(QMainWindow):
         button_layout.addWidget(self.egg_release, 4, 1)
         # button_layout.addWidget(party_mode, 4, 1)
         data_layout.addLayout(button_layout, 1)
+
+        # self.party_button = QPushButton('DO NOT PRESS')
+        # self.party_button.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        # self.party_button.clicked.connect(self.party) # import party
+
+        # adding port dropdown
+        self.ports = QComboBox()
+        self.ports.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.ports.addItems(self.comm.port_list[:])
+        self.ports.currentTextChanged.connect(self.update_ports)
+        data_layout.addWidget(self.ports)
 
         # graph side layout
         graph_layout = QGridLayout()
@@ -262,17 +281,25 @@ class GCS(QMainWindow):
         final_layout.addLayout(info_layout)
         final_layout.addLayout(base_layout)
 
-        # set initial conditions
-        self.data_read = False
-        self.comm = live_read()
-        self.probe = 0 # tells us  the payload has not been released from the container
-        self.egg = 0 # tells us the egg has not been released from the payload
-        self.r_packet = 0 # recieved packet count
-        self.l_packet = 0 # lost packet count
-
         # starting timer for updates
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.apply_update)
+
+        # calling available ports
+        try:
+            self.update_ports()
+        except:
+            print('ERROR: No ports found')
+    
+    def update_ports(self):
+        new_port = self.ports.currentText()
+        print("Switching to:", new_port)
+
+        # Update chosen port
+        self.comm.chosen_port = new_port
+
+        # connecting to select port
+        self.comm.select_port()
 
     # MAKING CODE TO UPDATE GRAPHS
     def apply_update(self):
@@ -321,19 +348,25 @@ class GCS(QMainWindow):
         self.fsw.setText('FSW State: ' + str(self.comm.state[-1]))
         if self.comm.state[-1] == 'LAUNCH_PAD':
             self.fsw.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         elif self.comm.state[-1] == 'ASCENT':
+            self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: orange; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         elif self.comm.state[-1] == 'APOGEE':
+            self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: yellow; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         elif self.comm.state[-1] == 'DESCENT':
             self.fsw.setStyleSheet('background-color: green; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         elif self.comm.state[-1] == 'PROBE_RELEASE':
+            self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: blue; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.probe = 1 # tells us the payload has been released from the container
         elif self.comm.state[-1] == 'PAYLOAD_RELEASE':
+            self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: purple; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.egg = 1 # tells us the egg has been released from the payload
         elif self.comm.state[-1] == 'LANDED':
+            self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: pink; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
 
         # cmd echo label
@@ -342,14 +375,14 @@ class GCS(QMainWindow):
         # velocity label
         if self.comm.state[-1] == 'DESCENT':
             if self.probe == 0:
-                if (self.comm.alt[-1] - self.comm.alt[-2]) >= 12 and (self.comm.alt[-1] - self.comm.alt[-2]) <= 18:
+                if abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 12 and abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 18:
                     self.velocity.setStyleSheet('background-color: green; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-                elif (self.comm.alt[-1] - self.comm.alt[-2]) <= 12 or (self.comm.alt[-1] - self.comm.alt[-2]) >= 18:
+                elif abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 12 or abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 18:
                     self.velocity.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             elif self.probe == 1:
-                if (self.comm.alt[-1] - self.comm.alt[-2]) >= 2 and (self.comm.alt[-1] - self.comm.alt[-2]) <= 8 and self.probe == 1:
+                if abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 2 and abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 8 and self.probe == 1:
                     self.velocity.setStyleSheet('background-color: green; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-                elif (self.comm.alt[-1] - self.comm.alt[-2]) <= 2 or (self.comm.alt[-1] - self.comm.alt[-2]) >= 8 and self.probe == 1: 
+                elif abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 2 or abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 8 and self.probe == 1: 
                     self.velocity.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             else:
                 self.velocity.setStyleSheet('background-color: white; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
@@ -412,6 +445,7 @@ class GCS(QMainWindow):
         self.cx_off.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.comm.start_read()
         self.apply_update()
+        # playsound()
 
     # cx_off
     def stop_cx(self):
@@ -420,6 +454,7 @@ class GCS(QMainWindow):
         self.cx_off.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.timer.stop()
+        # playsound()
     
     # set time
     def time_set(self):
@@ -427,6 +462,7 @@ class GCS(QMainWindow):
         self.data_table.setItem(0, 0, QTableWidgetItem('00:00:00'))
         # self.data_table.setItem(0, 0, QTableWidgetItem(time[-1]))
         self.set_time.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        # playsound()
 
     # sim enable
     def sim_e(self):
@@ -434,13 +470,15 @@ class GCS(QMainWindow):
         self.comm.send('CMD,1093,SIM,ENABLE\n')
         self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        # playsound()
 
     # sim activate
     def sim_a(self):
         self.comm.simulation = True
         if self.comm.simEnabled:
-            self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
             self.comm.send('CMD,1093,SIM,ACTIVATE\n')
+            self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            # playsound()
             csv_filename = self.comm.csv_filename
             # code to read CSV file
             if csv_filename:
@@ -455,38 +493,39 @@ class GCS(QMainWindow):
         self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        # playsound()
     
     # calibration
     def cal(self):
         self.comm.send("CMD,1093,CAL\n")
         self.calibrate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        # playsound()
     
     # egg drop
-    egg = False
     def egg_drop(self):
-        if self.egg == False:
-            self.egg = True
+        if self.egg == 0:
+            self.egg = 1
             self.comm.send("CMD,1093,MEC,EGG,ON\n")
             self.egg_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         else:
-            self.egg = False
+            self.egg = 0
             self.comm.send("CMD,1093,MEC,EGG,OFF\n")
             self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        # playsound()
 
     # payload release
-    pl = False
     def payload(self):
-        if self.pl == False:
-            self.pl = True
+        if self.probe == 0:
+            self.probe = 1
             self.comm.send("CMD,1093,MEC,PROBE,ON\n")
             self.probe_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         else:
-            self.pl = False
+            self.probe = 0
             self.comm.send("CMD,1093,MEC,PROBE,OFF\n")
             self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        # playsound()
 
     # ACS
-    sys = False
     def acs_sys(self):
         if self.sys == False:
             self.sys = True
@@ -496,6 +535,7 @@ class GCS(QMainWindow):
             self.sys = False
             self.comm.send("CMD,1093,MEC,ACS,OFF\n")
             self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        # playsound()
     
 # opening main window
 if __name__ == "__main__":

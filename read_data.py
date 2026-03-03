@@ -1,23 +1,25 @@
 import serial
+import serial.tools.list_ports
 import csv
 import threading
 import time
-# do i need to import time??
 
 # add more error mitigation 
 class live_read():
-    def __init__(self, port='COM8', baud=115200):
+    def __init__(self, port=None, baud=115200):
         self.start = False
         self.simEnabled = False
         self.simulation = False
         self.csv_filename = 'Vortex_1093.csv'
-
-        try:
-            self.ser = serial.Serial(port, baud, timeout=0.1)
-            print(f"Connected to {port}")
-        except serial.SerialException:
-            print(f"ERROR: Could not open {port}")
-            self.ser = None
+        self.port = port
+        self.chosen_port = self.port
+        self.baud = baud
+        self.port_list = []
+        self.avport = serial.tools.list_ports.comports()
+        
+        # selecting the port
+        for port in self.avport:
+            self.port_list.append(port.device)
             
         # making lists for individual variables
         # initial conditions are example packet from launchpad
@@ -44,6 +46,18 @@ class live_read():
         self.sats = []
         self.cmd = []
         self.data_list = []
+    
+    def select_port(self):
+        if self.chosen_port is not None:
+            try:
+                self.ser = serial.Serial(self.chosen_port, self.baud, timeout=0.1)
+                print(f"Connected to {self.chosen_port}")
+                self.port = self.chosen_port
+            except serial.SerialException:
+                print(f"ERROR: Could not open {self.chosen_port}")
+        else:
+            print("ERROR: No port selected")
+            return
 
     def start_read(self):
         self.start = True
@@ -88,7 +102,7 @@ class live_read():
                         self.a_roll.append(float(self.data_list[13])) # accel roll
                         self.a_pitch.append(float(self.data_list[14])) # accel pitch
                         self.a_yaw.append(float(self.data_list[15])) # accel yaw
-                        self.gps_time.append(float(self.data_list[16])) # gps time
+                        self.gps_time.append((self.data_list[16])) # gps time
                         self.gps_alt.append(float(self.data_list[17])) # gps altitude
                         self.lat.append(float(self.data_list[18])) # latitude
                         self.lon.append(float(self.data_list[19])) # longitude
