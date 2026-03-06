@@ -137,5 +137,5 @@ class live_read():
                     command = ','.join(line) # joins packet separated by commas
                     self.send(command)
     
-    def stop_sim(self, command):
+    def stop_sim(self):
         self.simulation = False

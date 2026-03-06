@@ -8,6 +8,7 @@ dependencies = [
     "folium>=0.20.0",
     "matplotlib>=3.10.8",
     "playsound==1.2.2",
+    "pygame-ce>=2.5.7",
     "pyqt5>=5.0",
     "pyqtgraph>=0.14.0",
     "pyserial>=3.5",

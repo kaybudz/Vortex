@@ -1,4 +1,5 @@
 # launchpad coordinates 38.37583 deg N, -79.6078 deg E
+# test launch target coordinates 31.072094 deg N, -86.053301 deg E
 
 # importing necessary libraries
 import sys
@@ -7,19 +8,19 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame, QComboBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QTimer
-from pyqtgraph import PlotWidget, mkPen, LegendItem
+from pyqtgraph import PlotWidget, mkBrush, mkPen, LegendItem
 from io import BytesIO
 from read_data import live_read
 import matplotlib 
 matplotlib.use('QT5Agg')
 import matplotlib.pylab as plt
-import matplotlib.animation as animation
+from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import time
-from party_mode import party
 from playsound import playsound # add sounds to hitting buttons? is there any sort of speaker system with the pi5
+import pygame
 
 dark_blue = QtGui.QColor(0, 107, 163)
 class GCS(QMainWindow):
@@ -44,6 +45,9 @@ class GCS(QMainWindow):
         self.r_packet = 0 # recieved packet count
         self.l_packet = 0 # lost packet count
         self.sys = False # acs system activation, should this be defaulted to true?
+        self.play = False # setting condition for party mode
+        self.lat_coord = 31.072094
+        self.long_coord = -86.053301
 
         # setting up layout and making universal font
         base_layout = QHBoxLayout()
@@ -120,11 +124,6 @@ class GCS(QMainWindow):
         self.set_time.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.set_time.clicked.connect(self.time_set)
 
-        # have this come in when landing state is reached?
-        # party_mode = QPushButton()
-        # party_mode.setText('Party Mode')
-        # party_mode.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-
         button_layout.addWidget(self.sim_enable, 0, 0)
         button_layout.addWidget(self.sim_activate, 0, 1)
         button_layout.addWidget(self.sim_disable, 1, 0)
@@ -135,12 +134,7 @@ class GCS(QMainWindow):
         button_layout.addWidget(self.set_time, 3, 1)
         button_layout.addWidget(self.probe_release, 4, 0)
         button_layout.addWidget(self.egg_release, 4, 1)
-        # button_layout.addWidget(party_mode, 4, 1)
         data_layout.addLayout(button_layout, 1)
-
-        # self.party_button = QPushButton('DO NOT PRESS')
-        # self.party_button.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        # self.party_button.clicked.connect(self.party) # import party
 
         # adding port dropdown
         self.ports = QComboBox()
@@ -148,6 +142,12 @@ class GCS(QMainWindow):
         self.ports.addItems(self.comm.port_list[:])
         self.ports.currentTextChanged.connect(self.update_ports)
         data_layout.addWidget(self.ports)
+
+        # adding party button
+        self.party_mode = QPushButton('DO NOT PRESS')
+        self.party_mode.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.party_mode.clicked.connect(self.party)
+        data_layout.addWidget(self.party_mode)
 
         # graph side layout
         graph_layout = QGridLayout()
@@ -171,7 +171,9 @@ class GCS(QMainWindow):
         frame = QVBoxLayout(loc_frame)
         frame.addWidget(canvas)
         self.gps_line, = self.loc_graph.plot([], [], [], lw=2)
-        self.loc_graph.scatter(38.37583, -79.6078, 0, c='red', s=50)
+        self.loc_graph.scatter(self.lat_coord, self.long_coord, 0, c='red', s=50)
+        self.loc_graph.set_xlim(31.072,31.0722)
+        self.loc_graph.set_ylim(-86.054,-86.053)
 
         # altitude graph
         self.alt_graph = PlotWidget() # placeholder graphs
@@ -236,13 +238,13 @@ class GCS(QMainWindow):
         self.curr_line = self.curr_graph.plot([], [], pen='k')
 
         self.accel_graph.addLegend(offset=(1,1))
-        alegend = LegendItem()                      
+        alegend = LegendItem()                     
         alegend.setParentItem(self.accel_graph.graphicsItem()) 
         alegend.anchor((0, 1), (0, 1))
         self.aroll_line = self.accel_graph.plot([], [], pen='r', name='Roll')
         self.apitch_line = self.accel_graph.plot([], [], pen='g', name='Pitch')
         self.ayaw_line = self.accel_graph.plot([], [], pen='b', name='Yaw')
-        
+
         self.gyro_graph.addLegend(offset=(1,1))
         glegend = LegendItem()                      
         glegend.setParentItem(self.gyro_graph.graphicsItem()) 
@@ -283,6 +285,7 @@ class GCS(QMainWindow):
 
         # starting timer for updates
         self.timer = QTimer(self)
+        self.timer.setInterval(100)
         self.timer.timeout.connect(self.apply_update)
 
         # calling available ports
@@ -301,12 +304,30 @@ class GCS(QMainWindow):
         # connecting to select port
         self.comm.select_port()
 
+    def party(self):
+        # if self.play is False:
+        #     playsound('C:/Users/kayla/Python311/Vortex/intergalactic_clipped.mp3')
+        #     self.play = True
+    # Initialize mixer once
+        if not hasattr(self, "pygame_initialized"):
+            pygame.mixer.init()
+            pygame.mixer.music.load('C:/Users/kayla/Python311/Vortex/intergalactic_clipped.mp3')
+            # self.pygame_initialized = True
+        if self.play is False:
+            pygame.mixer.music.play()
+            self.play = True
+        else:
+            pygame.mixer.music.stop()
+            self.play = False
+
     # MAKING CODE TO UPDATE GRAPHS
     def apply_update(self):
         # print statement for testing purposes
         # print('New data added')
         self.comm.update()
-        self.timer.start(1000)
+        # self.timer.start(100)
+        # MAKE SURE THIS LINE WORKS
+        self.timer.start()
 
         # updating data table
         self.data_table.setItem(0, 0, QTableWidgetItem(str(self.comm.time[-1]))) # mission time
@@ -433,9 +454,6 @@ class GCS(QMainWindow):
         self.gpitch_line.setData(self.time, self.gyro_pitch)
         self.gyaw_line.setData(self.time, self.gyro_yaw)
 
-        # CODE TO UPDATE 3D PLOT
-
-
     # MAKING BUTTON COMMANDS
     # cx_on
     def start_cx(self):
@@ -445,7 +463,7 @@ class GCS(QMainWindow):
         self.cx_off.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.comm.start_read()
         self.apply_update()
-        # playsound()
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # cx_off
     def stop_cx(self):
@@ -454,15 +472,13 @@ class GCS(QMainWindow):
         self.cx_off.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.timer.stop()
-        # playsound()
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # set time
     def time_set(self):
         self.comm.send('CMD,1093,ST,UTC\n')
-        self.data_table.setItem(0, 0, QTableWidgetItem('00:00:00'))
-        # self.data_table.setItem(0, 0, QTableWidgetItem(time[-1]))
         self.set_time.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        # playsound()
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim enable
     def sim_e(self):
@@ -470,7 +486,7 @@ class GCS(QMainWindow):
         self.comm.send('CMD,1093,SIM,ENABLE\n')
         self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        # playsound()
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim activate
     def sim_a(self):
@@ -478,28 +494,28 @@ class GCS(QMainWindow):
         if self.comm.simEnabled:
             self.comm.send('CMD,1093,SIM,ACTIVATE\n')
             self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-            # playsound()
             csv_filename = self.comm.csv_filename
             # code to read CSV file
             if csv_filename:
                 self.comm.run_sim(csv_filename)   
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim disable
     def sim_d(self):
         self.comm.simulation = False
         self.comm.simEnabled = False
-        self.comm.stop_sim(self)
+        self.comm.stop_sim()
         self.comm.send("CMD,1093,SIM,DISABLE\n")
         self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        # playsound()
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # calibration
     def cal(self):
         self.comm.send("CMD,1093,CAL\n")
         self.calibrate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        # playsound()
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # egg drop
     def egg_drop(self):
@@ -507,11 +523,12 @@ class GCS(QMainWindow):
             self.egg = 1
             self.comm.send("CMD,1093,MEC,EGG,ON\n")
             self.egg_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.egg = 0
             self.comm.send("CMD,1093,MEC,EGG,OFF\n")
             self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        # playsound()
+            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # payload release
     def payload(self):
@@ -519,11 +536,12 @@ class GCS(QMainWindow):
             self.probe = 1
             self.comm.send("CMD,1093,MEC,PROBE,ON\n")
             self.probe_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.probe = 0
             self.comm.send("CMD,1093,MEC,PROBE,OFF\n")
             self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        # playsound()
+            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # ACS
     def acs_sys(self):
@@ -531,11 +549,12 @@ class GCS(QMainWindow):
             self.sys = True
             self.comm.send("CMD,1093,MEC,ACS,ON\n")
             self.acs.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.sys = False
             self.comm.send("CMD,1093,MEC,ACS,OFF\n")
             self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        # playsound()
+            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
 # opening main window
 if __name__ == "__main__":
