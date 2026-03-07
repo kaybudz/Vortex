@@ -4,7 +4,7 @@
 # importing necessary libraries
 import sys
 import os
-from PyQt5 import QtCore, QtGui, QtWidgets 
+from PyQt5 import QtGui, QtWidgets 
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame, QComboBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QTimer
@@ -36,6 +36,9 @@ class GCS(QMainWindow):
         self.setWindowIcon(QIcon('Vortex_Logo.png'))
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
+        self.lat_history = []
+        self.lon_history = []
+        self.alt_history = []
 
         # set initial conditions
         self.data_read = False
@@ -157,6 +160,7 @@ class GCS(QMainWindow):
         self.time = list(range(10))
 
         # creating 3D plot
+        # MAKE THIS NOT LOOK LIKE SHIT
         location = Figure() # still cant see z axis constrained_layout=True
         canvas = FigureCanvas(location)
         self.loc_graph = location.add_subplot(111, projection='3d')
@@ -172,8 +176,9 @@ class GCS(QMainWindow):
         frame.addWidget(canvas)
         self.gps_line, = self.loc_graph.plot([], [], [], lw=2)
         self.loc_graph.scatter(self.lat_coord, self.long_coord, 0, c='red', s=50)
-        self.loc_graph.set_xlim(31.072,31.0722)
-        self.loc_graph.set_ylim(-86.054,-86.053)
+        # self.loc_graph.set_xlim(31.072,31.0722)
+        # self.loc_graph.set_ylim(-86.054,-86.053)
+        self.loc_graph.autoscale(enable=True, axis='both', tight=None)
 
         # altitude graph
         self.alt_graph = PlotWidget() # placeholder graphs
@@ -284,9 +289,14 @@ class GCS(QMainWindow):
         final_layout.addLayout(base_layout)
 
         # starting timer for updates
+        # FIX THIS DOGSHIT
+        # self.timer = QTimer(self)
+        # self.timer.setInterval(1000)
+        # self.timer.timeout.connect(self.apply_update)
         self.timer = QTimer(self)
-        self.timer.setInterval(100)
+        self.timer.setInterval(1000)
         self.timer.timeout.connect(self.apply_update)
+        # self.timer.setInterval(1000)
 
         # calling available ports
         try:
@@ -324,10 +334,8 @@ class GCS(QMainWindow):
     def apply_update(self):
         # print statement for testing purposes
         # print('New data added')
-        self.comm.update()
-        # self.timer.start(100)
-        # MAKE SURE THIS LINE WORKS
         self.timer.start()
+        self.comm.update()
 
         # updating data table
         self.data_table.setItem(0, 0, QTableWidgetItem(str(self.comm.time[-1]))) # mission time
@@ -407,52 +415,58 @@ class GCS(QMainWindow):
                     self.velocity.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             else:
                 self.velocity.setStyleSheet('background-color: white; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-        self.velocity.setText('Velocity (m/s): ' + str(self.comm.alt[-1] - self.comm.alt[-2]))
+        self.velocity.setText('Velocity (m/s): ' + str(round((self.comm.alt[-1] - self.comm.alt[-2]),2)))
 
         # setting time for graphs
         self.time = self.time[1:]
         self.time.append(self.time[-1] + 1)
 
         # updating graphs
-        self.gps_line.set_data([self.comm.lat[-1]], [self.comm.lon[-1]])
-        self.gps_line.set_3d_properties([self.comm.alt[-1]]) # Use set_3d_properties for z data
+        self.lat_history.append(self.comm.lat[-1])
+        self.lon_history.append(self.comm.lon[-1])
+        self.alt_history.append(self.comm.alt[-1])
+        self.gps_line.set_data(self.lat_history, self.lon_history)
+        self.gps_line.set_3d_properties(self.alt_history)
+
+        # self.gps_line.set_data([self.comm.lat[-1]], [self.comm.lon[-1]])
+        # self.gps_line.set_3d_properties([self.comm.alt[-1]]) # Use set_3d_properties for z data
     
         # altitude
-        self.altitude = [self.comm.alt[-1] for _ in range(10)]
-        self.comm.alt = self.comm.alt[1:]
-        self.alt_line.setData(self.time, self.altitude)
+        if len(self.comm.alt) > 0:
+            window = min(10, len(self.comm.alt))
+            self.alt_line.setData(self.time[-window:], self.comm.alt[-window:])
 
         # voltage
-        self.voltage = [self.comm.volt[-1] for _ in range(10)]
-        self.comm.volt = self.comm.volt[1:]
-        self.volt_line.setData(self.time, self.voltage)
+        if len(self.comm.volt) > 0:
+            window = min(10, len(self.comm.volt))
+            self.volt_line.setData(self.time[-window:], self.comm.volt[-window:])
 
         # current
-        self.current = [self.comm.curr[-1] for _ in range(10)]
-        self.comm.curr = self.comm.curr[1:]
-        self.curr_line.setData(self.time, self.current)
+        if len(self.comm.curr) > 0:
+            window = min(10, len(self.comm.curr))
+            self.curr_line.setData(self.time[-window:], self.comm.curr[-window:])
 
         # acceleration
-        self.accel_roll = [self.comm.a_roll[-1] for _ in range(10)]
-        self.accel_pitch = [self.comm.a_pitch[-1] for _ in range(10)]
-        self.accel_yaw = [self.comm.a_yaw[-1] for _ in range(10)]
-        self.comm.a_roll = self.comm.a_roll[1:]
-        self.comm.a_pitch = self.comm.a_pitch[1:]
-        self.comm.a_yaw = self.comm.a_yaw[1:]
-        self.aroll_line.setData(self.time, self.accel_roll)
-        self.apitch_line.setData(self.time, self.accel_pitch)
-        self.ayaw_line.setData(self.time, self.accel_yaw)
+        if len(self.comm.a_roll) > 0:
+            window = min(10, len(self.comm.a_roll))
+            self.aroll_line.setData(self.time[-window:], self.comm.a_roll[-window:])
+        if len(self.comm.a_pitch) > 0:
+            window = min(10, len(self.comm.a_pitch))
+            self.apitch_line.setData(self.time[-window:], self.comm.a_pitch[-window:])
+        if len(self.comm.a_yaw) > 0:
+            window = min(10, len(self.comm.a_yaw))
+            self.ayaw_line.setData(self.time[-window:], self.comm.a_yaw[-window:])
 
         # rotation
-        self.gyro_roll = [self.comm.g_roll[-1] for _ in range(10)]
-        self.gyro_pitch = [self.comm.g_pitch[-1] for _ in range(10)]
-        self.gyro_yaw = [self.comm.g_yaw[-1] for _ in range(10)]
-        self.comm.g_roll = self.comm.g_roll[1:]
-        self.comm.g_pitch = self.comm.g_pitch[1:]
-        self.comm.g_yaw = self.comm.g_yaw[1:]
-        self.groll_line.setData(self.time, self.gyro_roll)
-        self.gpitch_line.setData(self.time, self.gyro_pitch)
-        self.gyaw_line.setData(self.time, self.gyro_yaw)
+        if len(self.comm.g_roll) > 0:
+            window = min(10, len(self.comm.g_roll))
+            self.groll_line.setData(self.time[-window:], self.comm.g_roll[-window:])
+        if len(self.comm.g_pitch) > 0:
+            window = min(10, len(self.comm.g_pitch))
+            self.gpitch_line.setData(self.time[-window:], self.comm.g_pitch[-window:])
+        if len(self.comm.a_yaw) > 0:
+            window = min(10, len(self.comm.g_yaw))
+            self.gyaw_line.setData(self.time[-window:], self.comm.g_yaw[-window:])
 
     # MAKING BUTTON COMMANDS
     # cx_on
@@ -521,12 +535,12 @@ class GCS(QMainWindow):
     def egg_drop(self):
         if self.egg == 0:
             self.egg = 1
-            self.comm.send("CMD,1093,MEC,EGG,ON\n")
+            self.comm.send("CMD,1093,MEC,EGG,UNLOCK\n")
             self.egg_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.egg = 0
-            self.comm.send("CMD,1093,MEC,EGG,OFF\n")
+            self.comm.send("CMD,1093,MEC,EGG,LOCK\n")
             self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
@@ -534,12 +548,12 @@ class GCS(QMainWindow):
     def payload(self):
         if self.probe == 0:
             self.probe = 1
-            self.comm.send("CMD,1093,MEC,PROBE,ON\n")
+            self.comm.send("CMD,1093,MEC,PROBE,UNLOCK\n")
             self.probe_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.probe = 0
-            self.comm.send("CMD,1093,MEC,PROBE,OFF\n")
+            self.comm.send("CMD,1093,MEC,PROBE,LOCK\n")
             self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
@@ -547,12 +561,12 @@ class GCS(QMainWindow):
     def acs_sys(self):
         if self.sys == False:
             self.sys = True
-            self.comm.send("CMD,1093,MEC,ACS,ON\n")
+            self.comm.send("CMD,1093,MEC,ACS,LEFT\n")
             self.acs.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.sys = False
-            self.comm.send("CMD,1093,MEC,ACS,OFF\n")
+            self.comm.send("CMD,1093,MEC,ACS,RIGHT\n")
             self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
