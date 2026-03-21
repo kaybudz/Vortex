@@ -174,7 +174,7 @@ class GCS(QMainWindow):
         loc_frame.setStyleSheet("background-color: white; border: 5px solid #006ba3")
         frame = QVBoxLayout(loc_frame)
         frame.addWidget(canvas)
-        self.gps_line, = self.loc_graph.plot([], [], [], lw=2)
+        self.gps_line, = self.loc_graph.plot3D([], [], [], lw=2)
         self.loc_graph.scatter(self.lat_coord, self.long_coord, 0, c='red', s=50)
         # self.loc_graph.set_xlim(31.072,31.0722)
         # self.loc_graph.set_ylim(-86.054,-86.053)
@@ -287,6 +287,8 @@ class GCS(QMainWindow):
         # add header 
         final_layout.addLayout(info_layout)
         final_layout.addLayout(base_layout)
+
+
 
         # starting timer for updates
         # FIX THIS DOGSHIT

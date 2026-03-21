@@ -106,8 +106,11 @@ class live_read():
                     self.gps_alt.append(float(self.data_list[17])) # gps altitude
                     self.lat.append(float(self.data_list[18])) # latitude
                     self.lon.append(float(self.data_list[19])) # longitude
-                    self.sats.append(int(self.data_list[20])) # satellites
+                    self.sats.append(float(self.data_list[20])) # satellites
                     self.cmd.append(self.data_list[21]) # command echo
+                    # print(self.lat)
+                    # print(self.lon)
+                    # print(self.sats)
                 else: 
                     print('ERROR: Packet is too short')
     
