@@ -146,12 +146,6 @@ class GCS(QMainWindow):
         self.ports.currentTextChanged.connect(self.update_ports)
         data_layout.addWidget(self.ports)
 
-        # adding party button
-        self.party_mode = QPushButton('DO NOT PRESS')
-        self.party_mode.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold')
-        self.party_mode.clicked.connect(self.party)
-        data_layout.addWidget(self.party_mode)
-
         # graph side layout
         graph_layout = QGridLayout()
         graph_layout.setSpacing(5)
@@ -378,27 +372,27 @@ class GCS(QMainWindow):
         # fsw label
         self.fsw.setText('FSW State: ' + str(self.comm.state[-1]))
         if self.comm.state[-1] == 'LAUNCH_PAD':
-            self.fsw.setStyleSheet('background-color: #ea9999; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.fsw.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         elif self.comm.state[-1] == 'ASCENT':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.fsw.setStyleSheet('background-color: #f9cb9c; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.fsw.setStyleSheet('background-color: orange; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         elif self.comm.state[-1] == 'APOGEE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.fsw.setStyleSheet('background-color: #ffe599; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.fsw.setStyleSheet('background-color: yellow; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         elif self.comm.state[-1] == 'DESCENT':
-            self.fsw.setStyleSheet('background-color: #b6d7a8; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.fsw.setStyleSheet('background-color: green; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         elif self.comm.state[-1] == 'PROBE_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.fsw.setStyleSheet('background-color: #a4c2f4; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.fsw.setStyleSheet('background-color: blue; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.probe = 1 # tells us the payload has been released from the container
         elif self.comm.state[-1] == 'PAYLOAD_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.fsw.setStyleSheet('background-color: #b4a7d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.fsw.setStyleSheet('background-color: purple; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.egg = 1 # tells us the egg has been released from the payload
         elif self.comm.state[-1] == 'LANDED':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.fsw.setStyleSheet('background-color: #f6b8d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.fsw.setStyleSheet('background-color: pink; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
 
         # cmd echo label
         self.echo.setText('CMD Echo: ' + str(self.comm.cmd[-1]))
@@ -435,39 +429,39 @@ class GCS(QMainWindow):
     
         # altitude
         if len(self.comm.alt) > 0:
-            window = min(20, len(self.comm.alt))
+            window = min(10, len(self.comm.alt))
             self.alt_line.setData(self.time[-window:], self.comm.alt[-window:])
 
         # voltage
         if len(self.comm.volt) > 0:
-            window = min(20, len(self.comm.volt))
+            window = min(10, len(self.comm.volt))
             self.volt_line.setData(self.time[-window:], self.comm.volt[-window:])
 
         # current
         if len(self.comm.curr) > 0:
-            window = min(20, len(self.comm.curr))
+            window = min(10, len(self.comm.curr))
             self.curr_line.setData(self.time[-window:], self.comm.curr[-window:])
 
         # acceleration
         if len(self.comm.a_roll) > 0:
-            window = min(20, len(self.comm.a_roll))
+            window = min(10, len(self.comm.a_roll))
             self.aroll_line.setData(self.time[-window:], self.comm.a_roll[-window:])
         if len(self.comm.a_pitch) > 0:
-            window = min(20, len(self.comm.a_pitch))
+            window = min(10, len(self.comm.a_pitch))
             self.apitch_line.setData(self.time[-window:], self.comm.a_pitch[-window:])
         if len(self.comm.a_yaw) > 0:
-            window = min(20, len(self.comm.a_yaw))
+            window = min(10, len(self.comm.a_yaw))
             self.ayaw_line.setData(self.time[-window:], self.comm.a_yaw[-window:])
 
         # rotation
         if len(self.comm.g_roll) > 0:
-            window = min(20, len(self.comm.g_roll))
+            window = min(10, len(self.comm.g_roll))
             self.groll_line.setData(self.time[-window:], self.comm.g_roll[-window:])
         if len(self.comm.g_pitch) > 0:
-            window = min(20, len(self.comm.g_pitch))
+            window = min(10, len(self.comm.g_pitch))
             self.gpitch_line.setData(self.time[-window:], self.comm.g_pitch[-window:])
         if len(self.comm.a_yaw) > 0:
-            window = min(20, len(self.comm.g_yaw))
+            window = min(10, len(self.comm.g_yaw))
             self.gyaw_line.setData(self.time[-window:], self.comm.g_yaw[-window:])
 
     # MAKING BUTTON COMMANDS
