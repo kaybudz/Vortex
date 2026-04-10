@@ -407,14 +407,14 @@ class GCS(QMainWindow):
         if self.comm.state[-1] == 'DESCENT':
             if self.probe == 0:
                 if abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 12 and abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 18:
-                    self.velocity.setStyleSheet('background-color: green; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+                    self.velocity.setStyleSheet('background-color: #b6d7a8; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
                 elif abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 12 or abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 18:
-                    self.velocity.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+                    self.velocity.setStyleSheet('background-color: #ea9999; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             elif self.probe == 1:
                 if abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 2 and abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 8 and self.probe == 1:
-                    self.velocity.setStyleSheet('background-color: green; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+                    self.velocity.setStyleSheet('background-color: #b6d7a8; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
                 elif abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 2 or abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 8 and self.probe == 1: 
-                    self.velocity.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+                    self.velocity.setStyleSheet('background-color: #ea9999; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             else:
                 self.velocity.setStyleSheet('background-color: white; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         self.velocity.setText('Velocity (m/s): ' + str(round((self.comm.alt[-1] - self.comm.alt[-2]),2)))
