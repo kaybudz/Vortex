@@ -107,10 +107,8 @@ class live_read():
                     self.lat.append(float(self.data_list[18])) # latitude
                     self.lon.append(float(self.data_list[19])) # longitude
                     self.sats.append(float(self.data_list[20])) # satellites
-                    self.cmd.append(self.data_list[21]) # command echo
-                    # print(self.lat)
-                    # print(self.lon)
-                    # print(self.sats)
+                    # self.cmd.append(self.data_list[21]) # command echo
+                    self.cmd.append(",".join(self.data_list[21:]))
                 else: 
                     print('ERROR: Packet is too short')
     
@@ -133,12 +131,41 @@ class live_read():
             csv_reader = csv.reader(file)
             next(csv_reader, None) # skips header if present
             for line in csv_reader:
+                self.data_list = line
+                if len(self.data_list) >= 22:
+                    #print(data_list)
+                    #print('data is updating')
+                    self.team.append(int(self.data_list[0])) # team ID
+                    self.time.append(self.data_list[1]) # mission time
+                    self.pckt.append(int(self.data_list[2])) # packet count
+                    self.mode.append(self.data_list[3]) # flight or sim mode
+                    self.state.append(self.data_list[4]) # fsw state
+                    self.alt.append(float(self.data_list[5])) # altitude
+                    self.temp.append(float(self.data_list[6])) # temperature
+                    self.press.append(float(self.data_list[7])) # pressure
+                    self.volt.append(float(self.data_list[8])) # voltage
+                    self.curr.append(float(self.data_list[9])) # current
+                    self.g_roll.append(float(self.data_list[10])) # gyro roll
+                    self.g_pitch.append(float(self.data_list[11])) # gyro pitch
+                    self.g_yaw.append(float(self.data_list[12])) # gyro yaw
+                    self.a_roll.append(float(self.data_list[13])) # accel roll
+                    self.a_pitch.append(float(self.data_list[14])) # accel pitch
+                    self.a_yaw.append(float(self.data_list[15])) # accel yaw
+                    self.gps_time.append((self.data_list[16])) # gps time
+                    self.gps_alt.append(float(self.data_list[17])) # gps altitude
+                    self.lat.append(float(self.data_list[18])) # latitude
+                    self.lon.append(float(self.data_list[19])) # longitude
+                    self.sats.append(float(self.data_list[20])) # satellites
+                    self.cmd.append(",".join(self.data_list[21:]))
+                else: 
+                    print('ERROR: Packet is too short')
+                
+                # delays to 1Hz
+                time.sleep(1)
+                
+                # breaks sim if stop sim is recieved
                 if not self.simulation: # sim is disabled
                     break
-                if line and line [0] == 'CMD': # a command has been sent
-                    line[1] = '1093'
-                    command = ','.join(line) # joins packet separated by commas
-                    self.send(command)
     
     def stop_sim(self):
         self.simulation = False

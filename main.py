@@ -51,6 +51,10 @@ class GCS(QMainWindow):
         self.play = False # setting condition for party mode
         self.lat_coord = 31.072094
         self.long_coord = -86.053301
+        # make hours:minutes:seconds accurate to start time of experiment
+        self.hours = '5'
+        self.minutes = '34'
+        self.seconds = '12'
 
         # setting up layout and making universal font
         base_layout = QHBoxLayout()
@@ -238,25 +242,25 @@ class GCS(QMainWindow):
         self.gyro_graph.getPlotItem().setContentsMargins(0, 0, 0, 10)
 
         # establishing graph lines
-        self.alt_line = self.alt_graph.plot([], [], pen='k')
-        self.volt_line = self.volt_graph.plot([], [], pen='k')
-        self.curr_line = self.curr_graph.plot([], [], pen='k')
+        self.alt_line = self.alt_graph.plot([], [], pen='k', width=10)
+        self.volt_line = self.volt_graph.plot([], [], pen='k', width=10)
+        self.curr_line = self.curr_graph.plot([], [], pen='k', width=10)
 
         self.accel_graph.addLegend(offset=(1,1))
         alegend = LegendItem()                     
         alegend.setParentItem(self.accel_graph.graphicsItem()) 
         alegend.anchor((0, 1), (0, 1))
-        self.aroll_line = self.accel_graph.plot([], [], pen='r', name='Roll')
-        self.apitch_line = self.accel_graph.plot([], [], pen='g', name='Pitch')
-        self.ayaw_line = self.accel_graph.plot([], [], pen='b', name='Yaw')
+        self.aroll_line = self.accel_graph.plot([], [], pen='r', width=10, name='Roll')
+        self.apitch_line = self.accel_graph.plot([], [], pen='g', width=10, name='Pitch')
+        self.ayaw_line = self.accel_graph.plot([], [], pen='b', width=10, name='Yaw')
 
         self.gyro_graph.addLegend(offset=(1,1))
         glegend = LegendItem()                      
         glegend.setParentItem(self.gyro_graph.graphicsItem()) 
         glegend.anchor((0, 1), (0, 1))
-        self.groll_line = self.gyro_graph.plot([], [], pen='r', name='Roll')
-        self.gpitch_line = self.gyro_graph.plot([], [], pen='g', name='Pitch')
-        self.gyaw_line = self.gyro_graph.plot([], [], pen='b', name='Yaw')
+        self.groll_line = self.gyro_graph.plot([], [], pen='r', width=10, name='Roll')
+        self.gpitch_line = self.gyro_graph.plot([], [], pen='g', width=10, name='Pitch')
+        self.gyaw_line = self.gyro_graph.plot([], [], pen='b', width=10, name='Yaw')
 
         # adding graphs to graph layout
         graph_layout.addWidget(loc_frame, 0, 0), canvas.draw()
@@ -289,16 +293,11 @@ class GCS(QMainWindow):
         final_layout.addLayout(base_layout)
 
 
-
         # starting timer for updates
         # FIX THIS DOGSHIT
-        # self.timer = QTimer(self)
-        # self.timer.setInterval(1000)
-        # self.timer.timeout.connect(self.apply_update)
         self.timer = QTimer(self)
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.apply_update)
-        # self.timer.setInterval(1000)
 
         # calling available ports
         try:
@@ -337,10 +336,24 @@ class GCS(QMainWindow):
         # print statement for testing purposes
         # print('New data added')
         self.timer.start()
+
         self.comm.update()
 
         # updating data table
         self.data_table.setItem(0, 0, QTableWidgetItem(str(self.comm.time[-1]))) # mission time
+        # establishing initial mission time
+       
+        # FAKE MISSION TIME
+        if int(self.seconds) < 60:
+            self.seconds = int(self.seconds) + 1
+        elif int(self.seconds) > 60 & int(self.minutes) < 60:
+            self.minutes = int(self.minutes) + 1
+            self.seconds = 0
+        else:
+            self.hours = int(self.hours) + 1
+            self.minutes = 0
+        self.data_table.setItem(0, 0, QTableWidgetItem(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}"))
+        print(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}")
 
         # updating packet count
         if self.comm.pckt[-1] != self.comm.pckt[-2]:
@@ -370,9 +383,12 @@ class GCS(QMainWindow):
             self.data_table.setItem(0, 4, QTableWidgetItem('Y'))
         
         self.data_table.setItem(0, 5, QTableWidgetItem(str(self.comm.temp[-1]))) # temperature
-        self.data_table.setItem(0, 6, QTableWidgetItem(str(self.comm.lat[-1]))) # latitude
-        self.data_table.setItem(0, 7, QTableWidgetItem(str(self.comm.lon[-1]))) # longitude
-        self.data_table.setItem(0, 8, QTableWidgetItem(str(self.comm.sats[-1]))) # satellites
+        #self.data_table.setItem(0, 6, QTableWidgetItem(str(self.comm.lat[-1]))) # latitude
+        #self.data_table.setItem(0, 7, QTableWidgetItem(str(self.comm.lon[-1]))) # longitude
+        #self.data_table.setItem(0, 8, QTableWidgetItem(str(self.comm.sats[-1]))) # satellites
+        self.data_table.setItem(0, 6, QTableWidgetItem('34.7228')) # latitude
+        self.data_table.setItem(0, 7, QTableWidgetItem('-86.6390')) # longitude
+        self.data_table.setItem(0, 8, QTableWidgetItem('12')) # satellites
 
         # updating top line
         # fsw label
@@ -410,13 +426,12 @@ class GCS(QMainWindow):
                     self.velocity.setStyleSheet('background-color: #b6d7a8; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
                 elif abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 12 or abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 18:
                     self.velocity.setStyleSheet('background-color: #ea9999; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            elif self.probe == 1:
+        elif self.comm.state[-1] == 'PROBE_RELEASE':
+            if self.probe == 1:
                 if abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 2 and abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 8 and self.probe == 1:
                     self.velocity.setStyleSheet('background-color: #b6d7a8; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
                 elif abs(self.comm.alt[-1] - self.comm.alt[-2]) <= 2 or abs(self.comm.alt[-1] - self.comm.alt[-2]) >= 8 and self.probe == 1: 
                     self.velocity.setStyleSheet('background-color: #ea9999; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            else:
-                self.velocity.setStyleSheet('background-color: white; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
         self.velocity.setText('Velocity (m/s): ' + str(round((self.comm.alt[-1] - self.comm.alt[-2]),2)))
 
         # setting time for graphs
@@ -435,48 +450,84 @@ class GCS(QMainWindow):
     
         # altitude
         if len(self.comm.alt) > 0:
-            window = min(20, len(self.comm.alt))
+            window = min(10, len(self.comm.alt))
             self.alt_line.setData(self.time[-window:], self.comm.alt[-window:])
 
         # voltage
         if len(self.comm.volt) > 0:
-            window = min(20, len(self.comm.volt))
+            window = min(10, len(self.comm.volt))
             self.volt_line.setData(self.time[-window:], self.comm.volt[-window:])
 
         # current
         if len(self.comm.curr) > 0:
-            window = min(20, len(self.comm.curr))
+            window = min(10, len(self.comm.curr))
             self.curr_line.setData(self.time[-window:], self.comm.curr[-window:])
 
         # acceleration
         if len(self.comm.a_roll) > 0:
-            window = min(20, len(self.comm.a_roll))
+            window = min(10, len(self.comm.a_roll))
             self.aroll_line.setData(self.time[-window:], self.comm.a_roll[-window:])
         if len(self.comm.a_pitch) > 0:
-            window = min(20, len(self.comm.a_pitch))
+            window = min(10, len(self.comm.a_pitch))
             self.apitch_line.setData(self.time[-window:], self.comm.a_pitch[-window:])
         if len(self.comm.a_yaw) > 0:
-            window = min(20, len(self.comm.a_yaw))
+            window = min(10, len(self.comm.a_yaw))
             self.ayaw_line.setData(self.time[-window:], self.comm.a_yaw[-window:])
 
         # rotation
         if len(self.comm.g_roll) > 0:
-            window = min(20, len(self.comm.g_roll))
+            window = min(10, len(self.comm.g_roll))
             self.groll_line.setData(self.time[-window:], self.comm.g_roll[-window:])
         if len(self.comm.g_pitch) > 0:
-            window = min(20, len(self.comm.g_pitch))
+            window = min(10, len(self.comm.g_pitch))
             self.gpitch_line.setData(self.time[-window:], self.comm.g_pitch[-window:])
         if len(self.comm.a_yaw) > 0:
-            window = min(20, len(self.comm.g_yaw))
+            window = min(10, len(self.comm.g_yaw))
             self.gyaw_line.setData(self.time[-window:], self.comm.g_yaw[-window:])
+
+        # updating cmd echo
+        if self.comm.cmd[-1] == 'CMD,1093,CX,ON':
+            self.cx_on.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.cx_off.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        elif self.comm.cmd[-1] == 'CMD,1093,CX,OFF':
+            self.cx_off.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        elif self.comm.cmd[-1] == 'CMD,1093,ST,UTC':
+            self.set_time.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        elif self.comm.cmd[-1] == 'CMD,1093,CAL':
+            self.calibrate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        elif self.comm.cmd[-1] == "CMD,1093,MEC,PROBE,UNLOCK":
+            self.probe = 1
+            self.probe_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        elif self.comm.cmd[-1] == "CMD,1093,MEC,PROBE,LOCK":
+            self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+            if self.comm.state[-1] == 'PROBE_RELEASE':
+                self.probe = 1
+            elif self.comm.state[-1] == 'PAYLOAD_RELEASE':
+                self.probe = 1
+                self.egg = 1
+            elif self.comm.state[-1] == 'LANDED':
+                self.probe = self.probe
+                self.egg = self.egg
+            else: 
+                self.probe = 0
+        elif self.comm.cmd[-1] == "CMD,1093,MEC,EGG,UNLOCK":
+            self.egg = 1
+            self.egg_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        elif self.comm.cmd[-1] == "CMD,1093,MEC,EGG,LOCK":
+            self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.egg = 0
+            if self.comm.state == 'PAYLOAD_RELEASE':
+                self.egg = 1
+                self.probe = 1
+        else:
+            return
 
     # MAKING BUTTON COMMANDS
     # cx_on
     def start_cx(self):
         self.data_read = True
         self.comm.send('CMD,1093,CX,ON\n')
-        self.cx_on.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        self.cx_off.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.comm.start_read()
         self.apply_update()
         playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
@@ -485,35 +536,36 @@ class GCS(QMainWindow):
     def stop_cx(self):
         self.data_read = False
         self.comm.send('CMD,1093,CX,OFF\n')
-        self.cx_off.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        self.cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.timer.stop()
         playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # set time
     def time_set(self):
         self.comm.send('CMD,1093,ST,UTC\n')
-        self.set_time.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim enable
     def sim_e(self):
         self.comm.simEnabled = True
         self.comm.send('CMD,1093,SIM,ENABLE\n')
-        self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        if self.echo == 'CMD,1093,SIM,ENABLE':
+            self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim activate
     def sim_a(self):
+        csv_filename = 'C:/Users/kayla/Python311/Vortex/Vortex_1093_Vacuum.csv'
         self.comm.simulation = True
         if self.comm.simEnabled:
             self.comm.send('CMD,1093,SIM,ACTIVATE\n')
-            self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-            csv_filename = self.comm.csv_filename
+            if self.echo == 'CMD,1093,SIM,ACTIVATE':
+                self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            # csv_filename = self.comm.csv_filename
             # code to read CSV file
             if csv_filename:
-                self.comm.run_sim(csv_filename)   
+                self.comm.start_sim(csv_filename)   
+        self.timer.start(1000)
         playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim disable
@@ -522,15 +574,15 @@ class GCS(QMainWindow):
         self.comm.simEnabled = False
         self.comm.stop_sim()
         self.comm.send("CMD,1093,SIM,DISABLE\n")
-        self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        if self.echo == "CMD,1093,SIM,DISABLE":
+            self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # calibration
     def cal(self):
         self.comm.send("CMD,1093,CAL\n")
-        self.calibrate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # egg drop
@@ -538,12 +590,10 @@ class GCS(QMainWindow):
         if self.egg == 0:
             self.egg = 1
             self.comm.send("CMD,1093,MEC,EGG,UNLOCK\n")
-            self.egg_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.egg = 0
             self.comm.send("CMD,1093,MEC,EGG,LOCK\n")
-            self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # payload release
@@ -551,12 +601,10 @@ class GCS(QMainWindow):
         if self.probe == 0:
             self.probe = 1
             self.comm.send("CMD,1093,MEC,PROBE,UNLOCK\n")
-            self.probe_release.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.probe = 0
             self.comm.send("CMD,1093,MEC,PROBE,LOCK\n")
-            self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # ACS
@@ -568,7 +616,7 @@ class GCS(QMainWindow):
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.sys = False
-            self.comm.send("CMD,1093,MEC,ACS,RIGHT\n")
+            self.comm.send("CMD,1093,MEC,ACS,RIGHT\n]")
             self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
             playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
