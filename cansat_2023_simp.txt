@@ -1,21 +1,3 @@
-################################################################################
-#
-# CanSat 2023 Simulated Pressure Command File 
-#
-#
-# Filename:    cansat_2023_simp.txt
-#
-# Date:        2023-01-16 11:20:05
-#
-# Notes:
-#   a) Contents are SIMP commands, where $ is to be replaced with the team id.
-#   b) Each line is to be transmitted @ 1 Hz by the ground station.
-#   c) All line text after a # character should be ignored as a comment.
-#   d) Blank lines are to be ignored.
-#   e) There may be intentional sensor glitches in this data.  Be prepared.
-#
-################################################################################
-
 CMD,$,SIMP,93948
 CMD,$,SIMP,93949
 CMD,$,SIMP,93948
@@ -172,5 +154,3 @@ CMD,$,SIMP,93914
 CMD,$,SIMP,93914
 CMD,$,SIMP,93914
 CMD,$,SIMP,93914
-
-### End of file ###

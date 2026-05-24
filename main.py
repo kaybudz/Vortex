@@ -49,12 +49,13 @@ class GCS(QMainWindow):
         self.l_packet = 0 # lost packet count
         self.sys = False # acs system activation, should this be defaulted to true?
         self.play = False # setting condition for party mode
-        self.lat_coord = 31.072094
-        self.long_coord = -86.053301
-        # make hours:minutes:seconds accurate to start time of experiment
-        self.hours = '5'
-        self.minutes = '34'
-        self.seconds = '12'
+        self.lat_coord = 0
+        self.long_coord = 0
+
+        # # make hours:minutes:seconds accurate to start time of experiment
+        # self.hours = '3'
+        # self.minutes = '21'
+        # self.seconds = '54'
 
         # setting up layout and making universal font
         base_layout = QHBoxLayout()
@@ -123,6 +124,14 @@ class GCS(QMainWindow):
         self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.probe_release.clicked.connect(self.payload)
 
+        self.probe_lock = QPushButton('Lock')
+        self.probe_lock.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.probe_lock.clicked.connect(self.payload_lock)
+
+        self.reset = QPushButton('Reset')
+        self.reset.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.reset.clicked.connect(self.reset_sd)
+
         self.calibrate = QPushButton('Calibrate')
         self.calibrate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.calibrate.clicked.connect(self.cal)
@@ -140,7 +149,9 @@ class GCS(QMainWindow):
         button_layout.addWidget(self.calibrate, 3, 0)
         button_layout.addWidget(self.set_time, 3, 1)
         button_layout.addWidget(self.probe_release, 4, 0)
-        button_layout.addWidget(self.egg_release, 4, 1)
+        button_layout.addWidget(self.probe_lock, 4, 1)
+        button_layout.addWidget(self.egg_release, 5, 0)
+        button_layout.addWidget(self.reset, 5, 1)
         data_layout.addLayout(button_layout, 1)
 
         # adding port dropdown
@@ -330,7 +341,7 @@ class GCS(QMainWindow):
         else:
             pygame.mixer.music.stop()
             self.play = False
-
+    
     # MAKING CODE TO UPDATE GRAPHS
     def apply_update(self):
         # print statement for testing purposes
@@ -340,20 +351,18 @@ class GCS(QMainWindow):
         self.comm.update()
 
         # updating data table
-        self.data_table.setItem(0, 0, QTableWidgetItem(str(self.comm.time[-1]))) # mission time
         # establishing initial mission time
-       
         # FAKE MISSION TIME
-        if int(self.seconds) < 60:
-            self.seconds = int(self.seconds) + 1
-        elif int(self.seconds) > 60 & int(self.minutes) < 60:
-            self.minutes = int(self.minutes) + 1
-            self.seconds = 0
-        else:
-            self.hours = int(self.hours) + 1
-            self.minutes = 0
-        self.data_table.setItem(0, 0, QTableWidgetItem(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}"))
-        print(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}")
+        # if int(self.seconds) < 60:
+        #     self.seconds = int(self.seconds) + 1
+        # elif int(self.seconds) > 60 & int(self.minutes) < 60:
+        #     self.minutes = int(self.minutes) + 1
+        #     self.seconds = 0
+        # else:
+        #     self.hours = int(self.hours) + 1
+        #     self.minutes = 0
+        # self.data_table.setItem(0, 0, QTableWidgetItem(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}"))
+        # print(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}")
 
         # updating packet count
         if self.comm.pckt[-1] != self.comm.pckt[-2]:
@@ -369,6 +378,9 @@ class GCS(QMainWindow):
                     self.l_packet = self.l_packet + 1
         self.data_table.setItem(0, 1, QTableWidgetItem(str(self.r_packet))) 
         self.data_table.setItem(0, 2, QTableWidgetItem(str(self.l_packet)))
+        
+        # mission time
+        self.data_table.setItem(0, 0, QTableWidgetItem(str(self.comm.time[-1])))
 
         # payload release
         if self.probe == 0:
@@ -555,7 +567,7 @@ class GCS(QMainWindow):
 
     # sim activate
     def sim_a(self):
-        csv_filename = 'C:/Users/kayla/Python311/Vortex/Vortex_1093_Vacuum.csv'
+        csv_filename = self.comm.csv_filename
         self.comm.simulation = True
         if self.comm.simEnabled:
             self.comm.send('CMD,1093,SIM,ACTIVATE\n')
@@ -565,13 +577,15 @@ class GCS(QMainWindow):
             # code to read CSV file
             if csv_filename:
                 self.comm.start_sim(csv_filename)   
-        self.timer.start(1000)
+        self.apply_update()
+        self.data_read = True
         playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim disable
     def sim_d(self):
         self.comm.simulation = False
         self.comm.simEnabled = False
+        self.data_read = False
         self.comm.stop_sim()
         self.comm.send("CMD,1093,SIM,DISABLE\n")
         if self.echo == "CMD,1093,SIM,DISABLE":
@@ -598,14 +612,20 @@ class GCS(QMainWindow):
 
     # payload release
     def payload(self):
-        if self.probe == 0:
-            self.probe = 1
-            self.comm.send("CMD,1093,MEC,PROBE,UNLOCK\n")
-            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
-        else:
-            self.probe = 0
-            self.comm.send("CMD,1093,MEC,PROBE,LOCK\n")
-            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        self.probe = 1
+        self.comm.send("CMD,1093,MEC,PROBE,UNLOCK\n")
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+    
+    # payload lock
+    def payload_lock(self):
+        self.probe = 0
+        self.comm.send("CMD,1093,MEC,PROBE,LOCK\n")
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+
+    # reset sd
+    def reset_sd(self):
+        self.comm.send("CMD,1093,SD,RESET\n")
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # ACS
     def acs_sys(self):
