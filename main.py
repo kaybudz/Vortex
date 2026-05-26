@@ -116,9 +116,13 @@ class GCS(QMainWindow):
         self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.acs.clicked.connect(self.acs_sys)
 
-        self.egg_release = QPushButton('Egg Drop')
+        self.egg_release = QPushButton('Egg Release')
         self.egg_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.egg_release.clicked.connect(self.egg_drop)
+
+        self.egg_lock = QPushButton('Egg Lock')
+        self.egg_lock.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.egg_lock.clicked.connect(self.egg_secure)
 
         self.probe_release = QPushButton('Release')
         self.probe_release.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
@@ -143,7 +147,7 @@ class GCS(QMainWindow):
         button_layout.addWidget(self.sim_enable, 0, 0)
         button_layout.addWidget(self.sim_activate, 0, 1)
         button_layout.addWidget(self.sim_disable, 1, 0)
-        button_layout.addWidget(self.acs, 1, 1)
+        #button_layout.addWidget(self.acs, 1, 1)
         button_layout.addWidget(self.cx_on, 2, 0)
         button_layout.addWidget(self.cx_off, 2, 1)
         button_layout.addWidget(self.calibrate, 3, 0)
@@ -151,7 +155,8 @@ class GCS(QMainWindow):
         button_layout.addWidget(self.probe_release, 4, 0)
         button_layout.addWidget(self.probe_lock, 4, 1)
         button_layout.addWidget(self.egg_release, 5, 0)
-        button_layout.addWidget(self.reset, 5, 1)
+        button_layout.addWidget(self.egg_lock, 5, 1)
+        button_layout.addWidget(self.reset, 1, 1)
         data_layout.addLayout(button_layout, 1)
 
         # adding port dropdown
@@ -176,10 +181,10 @@ class GCS(QMainWindow):
 
         # creating 3D plot
         # MAKE THIS NOT LOOK LIKE SHIT
-        location = Figure() # still cant see z axis constrained_layout=True
-        canvas = FigureCanvas(location)
-        self.loc_graph = location.add_subplot(111, projection='3d')
-        location.subplots_adjust(left=0, right=0.79, bottom=0.05, top=1)
+        self.location = Figure() # still cant see z axis constrained_layout=True
+        self.canvas = FigureCanvas(self.location)
+        self.loc_graph = self.location.add_subplot(111, projection='3d')
+        self.location.subplots_adjust(left=0, right=0.79, bottom=0.05, top=1)
         self.loc_graph.set_xlabel('Latitude(°N)', labelpad=2)
         self.loc_graph.set_ylabel('Longitude (°E)', labelpad=2)
         self.loc_graph.set_zlabel('Altitude (m)', labelpad=1.5)
@@ -188,9 +193,10 @@ class GCS(QMainWindow):
         loc_frame = QFrame()
         loc_frame.setStyleSheet("background-color: white; border: 5px solid #006ba3")
         frame = QVBoxLayout(loc_frame)
-        frame.addWidget(canvas)
-        self.gps_line, = self.loc_graph.plot3D([], [], [], lw=2)
-        self.loc_graph.scatter(self.lat_coord, self.long_coord, 0, c='red', s=50)
+        frame.addWidget(self.canvas)
+        self.gps_line, = self.loc_graph.plot([], [], [], lw=2)
+
+        #self.loc_graph.scatter(self.lat_coord, self.long_coord, 0, c='red', s=50) #ADD THIS BACK IN
         # self.loc_graph.set_xlim(31.072,31.0722)
         # self.loc_graph.set_ylim(-86.054,-86.053)
         self.loc_graph.autoscale(enable=True, axis='both', tight=None)
@@ -274,7 +280,7 @@ class GCS(QMainWindow):
         self.gyaw_line = self.gyro_graph.plot([], [], pen='b', width=10, name='Yaw')
 
         # adding graphs to graph layout
-        graph_layout.addWidget(loc_frame, 0, 0), canvas.draw()
+        graph_layout.addWidget(loc_frame, 0, 0), self.canvas.draw()
         graph_layout.addWidget(self.alt_graph, 0, 1)
         graph_layout.addWidget(self.volt_graph, 0, 2)
         graph_layout.addWidget(self.curr_graph, 1, 0)
@@ -305,7 +311,6 @@ class GCS(QMainWindow):
 
 
         # starting timer for updates
-        # FIX THIS DOGSHIT
         self.timer = QTimer(self)
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.apply_update)
@@ -395,12 +400,12 @@ class GCS(QMainWindow):
             self.data_table.setItem(0, 4, QTableWidgetItem('Y'))
         
         self.data_table.setItem(0, 5, QTableWidgetItem(str(self.comm.temp[-1]))) # temperature
-        #self.data_table.setItem(0, 6, QTableWidgetItem(str(self.comm.lat[-1]))) # latitude
-        #self.data_table.setItem(0, 7, QTableWidgetItem(str(self.comm.lon[-1]))) # longitude
-        #self.data_table.setItem(0, 8, QTableWidgetItem(str(self.comm.sats[-1]))) # satellites
-        self.data_table.setItem(0, 6, QTableWidgetItem('34.7228')) # latitude
-        self.data_table.setItem(0, 7, QTableWidgetItem('-86.6390')) # longitude
-        self.data_table.setItem(0, 8, QTableWidgetItem('12')) # satellites
+        self.data_table.setItem(0, 6, QTableWidgetItem(str(self.comm.lat[-1]))) # latitude
+        self.data_table.setItem(0, 7, QTableWidgetItem(str(self.comm.lon[-1]))) # longitude
+        self.data_table.setItem(0, 8, QTableWidgetItem(str(self.comm.sats[-1]))) # satellites
+        # self.data_table.setItem(0, 6, QTableWidgetItem('34.7228')) # latitude
+        # self.data_table.setItem(0, 7, QTableWidgetItem('-86.6390')) # longitude
+        # self.data_table.setItem(0, 8, QTableWidgetItem('12')) # satellites
 
         # updating top line
         # fsw label
@@ -451,14 +456,30 @@ class GCS(QMainWindow):
         self.time.append(self.time[-1] + 1)
 
         # updating graphs
-        self.lat_history.append(self.comm.lat[-1])
-        self.lon_history.append(self.comm.lon[-1])
-        self.alt_history.append(self.comm.alt[-1])
+        # self.lat_history.append(self.comm.lat[-1])
+        # self.lon_history.append(self.comm.lon[-1])
+        # self.alt_history.append(self.comm.alt[-1])
+        # self.gps_line.set_data(self.lat_history, self.lon_history)
+        # self.gps_line.set_3d_properties(self.alt_history)
+        # self.canvas.draw()
+
+        # # self.gps_line.set_data([self.comm.lat[-1]], [self.comm.lon[-1]])
+        # # self.gps_line.set_3d_properties([self.comm.alt[-1]]) # Use set_3d_properties for z data
+
+        self.lat_history.append(float(self.comm.lat[-1]))
+        self.lon_history.append(float(self.comm.lon[-1]))
+        self.alt_history.append(float(self.comm.alt[-1]))
+
         self.gps_line.set_data(self.lat_history, self.lon_history)
         self.gps_line.set_3d_properties(self.alt_history)
 
-        # self.gps_line.set_data([self.comm.lat[-1]], [self.comm.lon[-1]])
-        # self.gps_line.set_3d_properties([self.comm.alt[-1]]) # Use set_3d_properties for z data
+        # update axes limits
+        self.loc_graph.set_xlim(min(self.lon_history), max(self.lon_history))
+        self.loc_graph.set_ylim(min(self.lat_history), max(self.lat_history))
+        self.loc_graph.set_zlim(min(self.alt_history), max(self.alt_history))
+
+        # redraw canvas
+        self.canvas.draw_idle()
     
         # altitude
         if len(self.comm.alt) > 0:
@@ -601,14 +622,14 @@ class GCS(QMainWindow):
     
     # egg drop
     def egg_drop(self):
-        if self.egg == 0:
-            self.egg = 1
-            self.comm.send("CMD,1093,MEC,EGG,UNLOCK\n")
-            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
-        else:
-            self.egg = 0
-            self.comm.send("CMD,1093,MEC,EGG,LOCK\n")
-            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        self.egg = 1
+        self.comm.send("CMD,1093,MEC,EGG,UNLOCK\n")
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+
+    def egg_secure(self):
+        self.egg = 0
+        self.comm.send("CMD,1093,MEC,EGG,LOCK\n")
+        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # payload release
     def payload(self):
