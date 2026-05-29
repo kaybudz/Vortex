@@ -12,6 +12,7 @@ class live_read():
         self.simulation = False
         # self.csv_filename = 'C:/Users/kayla/Python311/Vortex/cansat_2023_simp.txt'
         self.csv_filename = 'Flight_1093.csv'
+        self.sim_filename = ''
         self.port = port
         self.chosen_port = self.port
         self.baud = baud
@@ -122,9 +123,9 @@ class live_read():
             print('ERROR: Port not found')
         print(command)
 
-    def start_sim(self, csv_filename):
+    def start_sim(self, sim_filename):
         self.simulation = True
-        self.sim_thread = threading.Thread(target=self.run_sim, args=(csv_filename,), daemon=True)
+        self.sim_thread = threading.Thread(target=self.run_sim, args=(sim_filename,), daemon=True)
         self.sim_thread.start()
 
     # FAKE SIM MODE
@@ -169,8 +170,8 @@ class live_read():
     #             if not self.simulation: # sim is disabled
     #                 break
 
-    def run_sim(self, csv_filename):
-        with open(csv_filename, mode='r') as file:
+    def run_sim(self, sim_filename):
+        with open(sim_filename, mode='r') as file:
             csv_reader = csv.reader(file)
             next(csv_reader, None) # skips header if present
             for line in csv_reader:
