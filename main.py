@@ -196,9 +196,7 @@ class GCS(QMainWindow):
         frame.addWidget(self.canvas)
         self.gps_line, = self.loc_graph.plot([], [], [], lw=2)
 
-        #self.loc_graph.scatter(self.lat_coord, self.long_coord, 0, c='red', s=50) #ADD THIS BACK IN
-        # self.loc_graph.set_xlim(31.072,31.0722)
-        # self.loc_graph.set_ylim(-86.054,-86.053)
+        self.loc_graph.scatter(self.lat_coord, self.long_coord, 0, c='red', s=50)
         self.loc_graph.autoscale(enable=True, axis='both', tight=None)
 
         # altitude graph
@@ -456,16 +454,7 @@ class GCS(QMainWindow):
         self.time.append(self.time[-1] + 1)
 
         # updating graphs
-        # self.lat_history.append(self.comm.lat[-1])
-        # self.lon_history.append(self.comm.lon[-1])
-        # self.alt_history.append(self.comm.alt[-1])
-        # self.gps_line.set_data(self.lat_history, self.lon_history)
-        # self.gps_line.set_3d_properties(self.alt_history)
-        # self.canvas.draw()
-
-        # # self.gps_line.set_data([self.comm.lat[-1]], [self.comm.lon[-1]])
-        # # self.gps_line.set_3d_properties([self.comm.alt[-1]]) # Use set_3d_properties for z data
-
+        # flight path
         self.lat_history.append(float(self.comm.lat[-1]))
         self.lon_history.append(float(self.comm.lon[-1]))
         self.alt_history.append(float(self.comm.alt[-1]))
@@ -474,8 +463,8 @@ class GCS(QMainWindow):
         self.gps_line.set_3d_properties(self.alt_history)
 
         # update axes limits
-        self.loc_graph.set_xlim(min(self.lon_history), max(self.lon_history))
-        self.loc_graph.set_ylim(min(self.lat_history), max(self.lat_history))
+        self.loc_graph.set_xlim(min(self.lat_history), max(self.lat_history))
+        self.loc_graph.set_ylim(min(self.lon_history), max(self.lon_history))
         self.loc_graph.set_zlim(min(self.alt_history), max(self.alt_history))
 
         # redraw canvas
