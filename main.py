@@ -169,7 +169,7 @@ class GCS(QMainWindow):
         # adding party button
         self.party_mode = QPushButton('DO NOT PRESS')
         self.party_mode.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold')
-        self.party_mode.clicked.connect(self.party)
+        # self.party_mode.clicked.connect(self.party)
         data_layout.addWidget(self.party_mode)
 
         # graph side layout
