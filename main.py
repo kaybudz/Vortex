@@ -19,8 +19,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import time
-from playsound import playsound # add sounds to hitting buttons? is there any sort of speaker system with the pi5
-import pygame
+#from playsound import playsound # add sounds to hitting buttons? is there any sort of speaker system with the pi5
+#import pygame
 
 dark_blue = QtGui.QColor(0, 107, 163)
 class GCS(QMainWindow):
@@ -329,21 +329,21 @@ class GCS(QMainWindow):
         # connecting to select port
         self.comm.select_port()
 
-    def party(self):
-        # if self.play is False:
-        #     playsound('C:/Users/kayla/Python311/Vortex/intergalactic_clipped.mp3')
-        #     self.play = True
-    # Initialize mixer once
-        if not hasattr(self, "pygame_initialized"):
-            pygame.mixer.init()
-            pygame.mixer.music.load('C:/Users/kayla/Python311/Vortex/intergalactic_clipped.mp3')
-            # self.pygame_initialized = True
-        if self.play is False:
-            pygame.mixer.music.play()
-            self.play = True
-        else:
-            pygame.mixer.music.stop()
-            self.play = False
+    # def party(self):
+    #     # if self.play is False:
+    #     #     playsound('C:/Users/kayla/Python311/Vortex/intergalactic_clipped.mp3')
+    #     #     self.play = True
+    # # Initialize mixer once
+    #     if not hasattr(self, "pygame_initialized"):
+    #         pygame.mixer.init()
+    #         pygame.mixer.music.load('C:/Users/kayla/Python311/Vortex/intergalactic_clipped.mp3')
+    #         # self.pygame_initialized = True
+    #     if self.play is False:
+    #         pygame.mixer.music.play()
+    #         self.play = True
+    #     else:
+    #         pygame.mixer.music.stop()
+    #         self.play = False
     
     # MAKING CODE TO UPDATE GRAPHS
     def apply_update(self):
@@ -552,19 +552,19 @@ class GCS(QMainWindow):
         self.comm.send('CMD,1093,CX,ON\n')
         self.comm.start_read()
         self.apply_update()
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # cx_off
     def stop_cx(self):
         self.data_read = False
         self.comm.send('CMD,1093,CX,OFF\n')
         self.timer.stop()
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # set time
     def time_set(self):
         self.comm.send('CMD,1093,ST,UTC\n')
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim enable
     def sim_e(self):
@@ -573,7 +573,7 @@ class GCS(QMainWindow):
         if self.echo == 'CMD,1093,SIM,ENABLE':
             self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
             self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim activate
     def sim_a(self):
@@ -589,7 +589,7 @@ class GCS(QMainWindow):
                 self.comm.start_sim(csv_filename)   
         self.apply_update()
         self.data_read = True
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim disable
     def sim_d(self):
@@ -602,40 +602,40 @@ class GCS(QMainWindow):
             self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
             self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
             self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # calibration
     def cal(self):
         self.comm.send("CMD,1093,CAL\n")
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # egg drop
     def egg_drop(self):
         self.egg = 1
         self.comm.send("CMD,1093,MEC,EGG,UNLOCK\n")
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     def egg_secure(self):
         self.egg = 0
         self.comm.send("CMD,1093,MEC,EGG,LOCK\n")
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # payload release
     def payload(self):
         self.probe = 1
         self.comm.send("CMD,1093,MEC,PROBE,UNLOCK\n")
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # payload lock
     def payload_lock(self):
         self.probe = 0
         self.comm.send("CMD,1093,MEC,PROBE,LOCK\n")
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # reset sd
     def reset_sd(self):
         self.comm.send("CMD,1093,SD,RESET\n")
-        playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # ACS
     def acs_sys(self):
@@ -643,12 +643,12 @@ class GCS(QMainWindow):
             self.sys = True
             self.comm.send("CMD,1093,MEC,ACS,LEFT\n")
             self.acs.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+            #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         else:
             self.sys = False
             self.comm.send("CMD,1093,MEC,ACS,RIGHT\n]")
             self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-            playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+            #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
 # opening main window
 if __name__ == "__main__":
