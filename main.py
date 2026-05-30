@@ -30,12 +30,12 @@ class GCS(QMainWindow):
     
         # CODE FOR CREATING A UI
         # setting up style of background of window
-        self.setGeometry(100, 100, 1024, 600)
+        # self.setGeometry(100, 100, 1024, 600)
         self.setStyleSheet("background-color: #cce5ff;")
         self.setWindowTitle("Vortex Base Station")
         self.setWindowIcon(QIcon('Vortex_Logo.png'))
         self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
+        self.setCentralWidget(self.central_widget) 
         self.lat_history = []
         self.lon_history = []
         self.alt_history = []
