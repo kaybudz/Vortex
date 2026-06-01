@@ -5,7 +5,7 @@
 import sys
 import os
 from PyQt5 import QtGui, QtWidgets 
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame, QComboBox
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QLineEdit, QWidget, QLabel, QTableWidget, QPushButton, QHeaderView, QTableWidgetItem, QFrame, QComboBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QTimer
 from pyqtgraph import PlotWidget, mkBrush, mkPen, LegendItem
@@ -51,6 +51,7 @@ class GCS(QMainWindow):
         self.play = False # setting condition for party mode
         self.lat_coord = 0
         self.long_coord = 0
+        self.curr_pckt = ''
 
         # # make hours:minutes:seconds accurate to start time of experiment
         # self.hours = '3'
@@ -165,6 +166,11 @@ class GCS(QMainWindow):
         self.ports.addItems(self.comm.port_list[:])
         self.ports.currentTextChanged.connect(self.update_ports)
         data_layout.addWidget(self.ports)
+
+        # adding csv filename for sim mode
+        self.file_input = QLineEdit()
+        self.file_input.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        data_layout.addWidget(self.file_input)
 
         # adding party button
         self.party_mode = QPushButton('DO NOT PRESS')
@@ -367,18 +373,22 @@ class GCS(QMainWindow):
         # self.data_table.setItem(0, 0, QTableWidgetItem(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}"))
         # print(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}")
 
-        # updating packet count
-        if self.comm.pckt[-1] != self.comm.pckt[-2]:
-            if self.comm.pckt[-1] - self.comm.pckt[-2] == 1:
-                if self.r_packet == 0:
-                    self.r_packet = self.r_packet + 2
+        # updating packet count 
+        # GET RID OF PCKT COUNTING WHEN NO INFO
+        if self.curr_pckt != self.comm.pckt[-1]:
+            if self.comm.pckt[-1] != self.comm.pckt[-2]:
+                if self.comm.pckt[-1] - self.comm.pckt[-2] == 1:
+                    if self.r_packet == 0:
+                        self.r_packet = self.r_packet + 2
+                    else:
+                        self.r_packet = self.r_packet + 1
                 else:
-                    self.r_packet = self.r_packet + 1
-            else:
-                if self.l_packet == 0:
-                    self.l_packet = self.l_packet + 1
-                else:
-                    self.l_packet = self.l_packet + 1
+                    if self.l_packet == 0:
+                        self.l_packet = self.l_packet + 1
+                    else:
+                        self.l_packet = self.l_packet + 1
+            self.curr_pckt = self.comm.pckt[-1]
+        
         self.data_table.setItem(0, 1, QTableWidgetItem(str(self.r_packet))) 
         self.data_table.setItem(0, 2, QTableWidgetItem(str(self.l_packet)))
         
@@ -568,6 +578,11 @@ class GCS(QMainWindow):
 
     # sim enable
     def sim_e(self):
+        try:
+            self.comm.sim_filename = self.file_input.text()
+            print(self.comm.sim_filename)
+        except:
+            print('Define SIM File')
         self.comm.simEnabled = True
         self.comm.send('CMD,1093,SIM,ENABLE\n')
         if self.echo == 'CMD,1093,SIM,ENABLE':
@@ -577,7 +592,7 @@ class GCS(QMainWindow):
 
     # sim activate
     def sim_a(self):
-        csv_filename = self.comm.csv_filename
+        csv_filename = self.comm.sim_filename
         self.comm.simulation = True
         if self.comm.simEnabled:
             self.comm.send('CMD,1093,SIM,ACTIVATE\n')
