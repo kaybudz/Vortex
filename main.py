@@ -18,7 +18,7 @@ from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import time
+from LED_simulation import LED
 #from playsound import playsound # add sounds to hitting buttons? is there any sort of speaker system with the pi5
 #import pygame
 
@@ -43,6 +43,7 @@ class GCS(QMainWindow):
         # set initial conditions
         self.data_read = False
         self.comm = live_read()
+        self.led = LED()
         self.probe = 0 # tells us  the payload has not been released from the container
         self.egg = 0 # tells us the egg has not been released from the payload
         self.r_packet = 0 # recieved packet count
@@ -52,6 +53,7 @@ class GCS(QMainWindow):
         self.lat_coord = 0
         self.long_coord = 0
         self.curr_pckt = ''
+        self.partytime = 0
 
         # # make hours:minutes:seconds accurate to start time of experiment
         # self.hours = '3'
@@ -175,7 +177,7 @@ class GCS(QMainWindow):
         # adding party button
         self.party_mode = QPushButton('DO NOT PRESS')
         self.party_mode.setStyleSheet('background-color: red; font-family: roboto; font-size: 16px; font-weight: bold')
-        # self.party_mode.clicked.connect(self.party)
+        self.party_mode.clicked.connect(self.party)
         data_layout.addWidget(self.party_mode)
 
         # graph side layout
@@ -335,10 +337,11 @@ class GCS(QMainWindow):
         # connecting to select port
         self.comm.select_port()
 
-    # def party(self):
-    #     # if self.play is False:
-    #     #     playsound('C:/Users/kayla/Python311/Vortex/intergalactic_clipped.mp3')
-    #     #     self.play = True
+    def party(self):
+        self.partytime = 1
+        # if self.play is False:
+        #     playsound('C:/Users/kayla/Python311/Vortex/intergalactic_clipped.mp3')
+        #     self.play = True
     # # Initialize mixer once
     #     if not hasattr(self, "pygame_initialized"):
     #         pygame.mixer.init()
@@ -418,28 +421,39 @@ class GCS(QMainWindow):
         # updating top line
         # fsw label
         self.fsw.setText('FSW State: ' + str(self.comm.state[-1]))
-        if self.comm.state[-1] == 'LAUNCH_PAD':
+        if self.partytime == 1:
+            self.led.send_LED('Galaxy')
+        elif self.comm.state[-1] == 'LAUNCH_PAD':
             self.fsw.setStyleSheet('background-color: #ea9999; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.led.send_LED('LAUNCH_PAD')
         elif self.comm.state[-1] == 'ASCENT':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #f9cb9c; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.led.send_LED('ASCENT')
         elif self.comm.state[-1] == 'APOGEE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #ffe599; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.led.send_LED('APOGEE')
         elif self.comm.state[-1] == 'DESCENT':
             self.fsw.setStyleSheet('background-color: #b6d7a8; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.led.send_LED('DESCENT')
         elif self.comm.state[-1] == 'PROBE_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #a4c2f4; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.probe = 1 # tells us the payload has been released from the container
+            self.led.send_LED('PROBE_RELEASE')
         elif self.comm.state[-1] == 'PAYLOAD_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #b4a7d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.egg = 1 # tells us the egg has been released from the payload
+            self.led.send_LED('PAYLOAD_RELEASE')
         elif self.comm.state[-1] == 'LANDED':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #f6b8d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
+            self.led.send_LED('LANDED')
+        else:
+            self.led.send_LED('Waiting')
 
         # cmd echo label
         self.echo.setText('CMD Echo: ' + str(self.comm.cmd[-1]))
