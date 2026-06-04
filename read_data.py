@@ -179,8 +179,8 @@ class live_read():
         self.sim_thread.start()
 
     # FAKE SIM MODE
-    def run_sim(self, csv_filename):
-        with open(csv_filename, mode='r') as file:
+    def run_sim(self, sim_filename):
+        with open(sim_filename, mode='r') as file:
             csv_reader = csv.reader(file)
             next(csv_reader, None) # skips header if present
             for line in csv_reader:
