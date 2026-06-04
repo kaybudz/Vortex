@@ -19,6 +19,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from LED_simulation import LED
+import time
 #from playsound import playsound # add sounds to hitting buttons? is there any sort of speaker system with the pi5
 #import pygame
 
@@ -170,9 +171,14 @@ class GCS(QMainWindow):
         data_layout.addWidget(self.ports)
 
         # adding csv filename for sim mode
-        self.file_input = QLineEdit()
+        self.file_input = QLineEdit('SIM File')
         self.file_input.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         data_layout.addWidget(self.file_input)
+
+        # adding manual command line
+        # self.command_input = QLineEdit('Command Input')
+        # self.command_input.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        # data_layout.addWidget(self.command_input)
 
         # adding party button
         self.party_mode = QPushButton('DO NOT PRESS')
@@ -356,9 +362,15 @@ class GCS(QMainWindow):
     
     # MAKING CODE TO UPDATE GRAPHS
     def apply_update(self):
+
+        # new_telemetry_received = self.comm.update()
+
+        # if not new_telemetry_received:
+        #     return
+
+    # Table and graph updates only happen for a new telemetry packet
         # print statement for testing purposes
         # print('New data added')
-        self.timer.start()
 
         self.comm.update()
 
@@ -378,19 +390,22 @@ class GCS(QMainWindow):
 
         # updating packet count 
         # GET RID OF PCKT COUNTING WHEN NO INFO
-        if self.curr_pckt != self.comm.pckt[-1]:
+        #if self.curr_pckt != self.comm.pckt[-1]:
+        try:
             if self.comm.pckt[-1] != self.comm.pckt[-2]:
                 if self.comm.pckt[-1] - self.comm.pckt[-2] == 1:
                     if self.r_packet == 0:
-                        self.r_packet = self.r_packet + 2
+                            self.r_packet = self.r_packet + 2
                     else:
-                        self.r_packet = self.r_packet + 1
+                            self.r_packet = self.r_packet + 1
                 else:
                     if self.l_packet == 0:
-                        self.l_packet = self.l_packet + 1
+                            self.l_packet = self.l_packet + 1
                     else:
-                        self.l_packet = self.l_packet + 1
-            self.curr_pckt = self.comm.pckt[-1]
+                            self.l_packet = self.l_packet + 1
+        except:
+            print('Not enough packets')
+            #self.curr_pckt = self.comm.pckt[-1]
         
         self.data_table.setItem(0, 1, QTableWidgetItem(str(self.r_packet))) 
         self.data_table.setItem(0, 2, QTableWidgetItem(str(self.l_packet)))
@@ -414,46 +429,71 @@ class GCS(QMainWindow):
         self.data_table.setItem(0, 6, QTableWidgetItem(str(self.comm.lat[-1]))) # latitude
         self.data_table.setItem(0, 7, QTableWidgetItem(str(self.comm.lon[-1]))) # longitude
         self.data_table.setItem(0, 8, QTableWidgetItem(str(self.comm.sats[-1]))) # satellites
-        # self.data_table.setItem(0, 6, QTableWidgetItem('34.7228')) # latitude
-        # self.data_table.setItem(0, 7, QTableWidgetItem('-86.6390')) # longitude
-        # self.data_table.setItem(0, 8, QTableWidgetItem('12')) # satellites
 
         # updating top line
         # fsw label
         self.fsw.setText('FSW State: ' + str(self.comm.state[-1]))
         if self.partytime == 1:
-            self.led.send_LED('Galaxy')
+            print('party')
+            # try:
+            #     self.led.send_LED('Galaxy')
+            # except:
+            #     print('Galaxy')
         elif self.comm.state[-1] == 'LAUNCH_PAD':
             self.fsw.setStyleSheet('background-color: #ea9999; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.led.send_LED('LAUNCH_PAD')
+            # try:
+            #     self.led.send_LED('LAUNCH_PAD')
+            # except:
+            #     print('LAUNCH_PAD')
         elif self.comm.state[-1] == 'ASCENT':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #f9cb9c; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.led.send_LED('ASCENT')
+            # try:
+            #     self.led.send_LED('ASCENT')
+            # except:
+            #     print('ASCENT')
         elif self.comm.state[-1] == 'APOGEE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #ffe599; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.led.send_LED('APOGEE')
+            # try:
+            #     self.led.send_LED('APOGEE')
+            # except:
+            #     print('APOGEE')
         elif self.comm.state[-1] == 'DESCENT':
             self.fsw.setStyleSheet('background-color: #b6d7a8; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.led.send_LED('DESCENT')
+            # try:
+            #     self.led.send_LED('DESCENT')
+            # except:
+            #     print('DESCENT')
         elif self.comm.state[-1] == 'PROBE_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #a4c2f4; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.probe = 1 # tells us the payload has been released from the container
-            self.led.send_LED('PROBE_RELEASE')
+            # try:
+            #     self.led.send_LED('PROBE_RELEASE')
+            # except:
+            #     print('PROBE_RELEASE')
         elif self.comm.state[-1] == 'PAYLOAD_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #b4a7d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.egg = 1 # tells us the egg has been released from the payload
-            self.led.send_LED('PAYLOAD_RELEASE')
+            # try:
+            #     self.led.send_LED('PAYLOAD_RELEASE')
+            # except:
+            #     print('PAYLOAD_RELEASE')
         elif self.comm.state[-1] == 'LANDED':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #f6b8d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            self.led.send_LED('LANDED')
+            # try:
+            #     self.led.send_LED('LANDED')
+            # except:
+            #     print('LANDED')
         else:
-            self.led.send_LED('Waiting')
+            try:
+                self.led.send_LED('Waiting')
+            except:
+                return
 
         # cmd echo label
         self.echo.setText('CMD Echo: ' + str(self.comm.cmd[-1]))
@@ -487,9 +527,34 @@ class GCS(QMainWindow):
         self.gps_line.set_3d_properties(self.alt_history)
 
         # update axes limits
-        self.loc_graph.set_xlim(min(self.lat_history), max(self.lat_history))
-        self.loc_graph.set_ylim(min(self.lon_history), max(self.lon_history))
-        self.loc_graph.set_zlim(min(self.alt_history), max(self.alt_history))
+        # self.loc_graph.set_xlim(min(self.lat_history), max(self.lat_history))
+        # self.loc_graph.set_ylim(min(self.lon_history), max(self.lon_history))
+        # self.loc_graph.set_zlim(min(self.alt_history), max(self.alt_history))
+        lat_min = min(self.lat_history)
+        lat_max = max(self.lat_history)
+
+        lon_min = min(self.lon_history)
+        lon_max = max(self.lon_history)
+
+        alt_min = min(self.alt_history)
+        alt_max = max(self.alt_history)
+
+        # Add padding if the values are identical
+        if lat_min == lat_max:
+            lat_min -= 0.0001
+            lat_max += 0.0001
+
+        if lon_min == lon_max:
+            lon_min -= 0.0001
+            lon_max += 0.0001
+
+        if alt_min == alt_max:
+            alt_min -= 1
+            alt_max += 1
+
+        self.loc_graph.set_xlim(lat_min, lat_max)
+        self.loc_graph.set_ylim(lon_min, lon_max)
+        self.loc_graph.set_zlim(alt_min, alt_max)
 
         # redraw canvas
         self.canvas.draw_idle()
@@ -575,6 +640,7 @@ class GCS(QMainWindow):
         self.data_read = True
         self.comm.send('CMD,1093,CX,ON\n')
         self.comm.start_read()
+        self.timer.start()
         self.apply_update()
         #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
@@ -594,6 +660,7 @@ class GCS(QMainWindow):
     def sim_e(self):
         try:
             self.comm.sim_filename = self.file_input.text()
+            #self.comm.sim_filename = 'cansat_2023_simp.txt'
             print(self.comm.sim_filename)
         except:
             print('Define SIM File')
@@ -606,19 +673,45 @@ class GCS(QMainWindow):
 
     # sim activate
     def sim_a(self):
+        # csv_filename = self.comm.sim_filename
+        # self.comm.simulation = True
+        # if self.comm.simEnabled:
+        #     self.comm.send('CMD,1093,SIM,ACTIVATE\n')
+        #     if self.echo == 'CMD,1093,SIM,ACTIVATE':
+        #         self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+        #     # csv_filename = self.comm.csv_filename
+        #     # code to read CSV file
+        #     if csv_filename:
+        #         self.comm.start_sim(csv_filename)   
+        # self.data_read = True
+        # time.sleep(2)
+        # try: 
+        #     self.apply_update()
+        # except:
+        #     print('Could not update simulation')
+        # #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
         csv_filename = self.comm.sim_filename
+
+        if not self.comm.simEnabled:
+            print("Enable simulation before activating it")
+            return
+
         self.comm.simulation = True
-        if self.comm.simEnabled:
-            self.comm.send('CMD,1093,SIM,ACTIVATE\n')
-            if self.echo == 'CMD,1093,SIM,ACTIVATE':
-                self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-            # csv_filename = self.comm.csv_filename
-            # code to read CSV file
-            if csv_filename:
-                self.comm.start_sim(csv_filename)   
-        self.apply_update()
         self.data_read = True
-        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+
+        # Start receiving telemetry from the CanSat
+        self.comm.send('CMD,1093,CX,ON\n')
+        self.comm.start_read()
+
+        # Tell the CanSat to activate simulation mode
+        self.comm.send('CMD,1093,SIM,ACTIVATE\n')
+
+        # Begin sending SIMP commands
+        if csv_filename:
+            self.comm.start_sim(csv_filename)
+
+        # Let the timer continuously update the GUI
+        self.timer.start()
 
     # sim disable
     def sim_d(self):
