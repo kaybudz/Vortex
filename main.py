@@ -435,60 +435,60 @@ class GCS(QMainWindow):
         self.fsw.setText('FSW State: ' + str(self.comm.state[-1]))
         if self.partytime == 1:
             print('party')
-            # try:
-            #     self.led.send_LED('Galaxy')
-            # except:
-            #     print('Galaxy')
+            try:
+                self.led.send_LED('Galaxy')
+            except:
+                print('Galaxy')
         elif self.comm.state[-1] == 'LAUNCH_PAD':
             self.fsw.setStyleSheet('background-color: #ea9999; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            # try:
-            #     self.led.send_LED('LAUNCH_PAD')
-            # except:
-            #     print('LAUNCH_PAD')
+            try:
+                self.led.send_LED('LAUNCH_PAD')
+            except:
+                print('LAUNCH_PAD')
         elif self.comm.state[-1] == 'ASCENT':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #f9cb9c; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            # try:
-            #     self.led.send_LED('ASCENT')
-            # except:
-            #     print('ASCENT')
+            try:
+                self.led.send_LED('ASCENT')
+            except:
+                print('ASCENT')
         elif self.comm.state[-1] == 'APOGEE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #ffe599; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            # try:
-            #     self.led.send_LED('APOGEE')
-            # except:
-            #     print('APOGEE')
+            try:
+                self.led.send_LED('APOGEE')
+            except:
+                print('APOGEE')
         elif self.comm.state[-1] == 'DESCENT':
             self.fsw.setStyleSheet('background-color: #b6d7a8; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            # try:
-            #     self.led.send_LED('DESCENT')
-            # except:
-            #     print('DESCENT')
+            try:
+                self.led.send_LED('DESCENT')
+            except:
+                print('DESCENT')
         elif self.comm.state[-1] == 'PROBE_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #a4c2f4; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.probe = 1 # tells us the payload has been released from the container
-            # try:
-            #     self.led.send_LED('PROBE_RELEASE')
-            # except:
-            #     print('PROBE_RELEASE')
+            try:
+                self.led.send_LED('PROBE_RELEASE')
+            except:
+                print('PROBE_RELEASE')
         elif self.comm.state[-1] == 'PAYLOAD_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #b4a7d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.egg = 1 # tells us the egg has been released from the payload
-            # try:
-            #     self.led.send_LED('PAYLOAD_RELEASE')
-            # except:
-            #     print('PAYLOAD_RELEASE')
+            try:
+                self.led.send_LED('PAYLOAD_RELEASE')
+            except:
+                print('PAYLOAD_RELEASE')
         elif self.comm.state[-1] == 'LANDED':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #f6b8d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            # try:
-            #     self.led.send_LED('LANDED')
-            # except:
-            #     print('LANDED')
+            try:
+                self.led.send_LED('LANDED')
+            except:
+                print('LANDED')
         else:
             try:
                 self.led.send_LED('Waiting')
