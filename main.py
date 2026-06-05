@@ -757,6 +757,8 @@ class GCS(QMainWindow):
     # reset sd
     def reset_sd(self):
         self.comm.send("CMD,1093,SD,RESET\n")
+        with open("Flight_1093.csv", "w") as file:
+            pass  # Doing nothing inside clears the file completely
         #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # ACS
