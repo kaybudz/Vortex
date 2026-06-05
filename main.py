@@ -641,7 +641,7 @@ class GCS(QMainWindow):
         self.comm.send('CMD,1093,CX,ON\n')
         self.comm.start_read()
         self.timer.start()
-        # self.apply_update()
+        #self.apply_update()
         #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # cx_off
@@ -656,75 +656,75 @@ class GCS(QMainWindow):
         self.comm.send('CMD,1093,ST,UTC\n')
         #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
-    # sim enable
-    def sim_e(self):
-        try:
-            self.comm.sim_filename = self.file_input.text()
-            #self.comm.sim_filename = 'cansat_2023_simp.txt'
-            print(self.comm.sim_filename)
-        except:
-            print('Define SIM File')
-        self.comm.simEnabled = True
-        self.comm.send('CMD,1093,SIM,ENABLE\n')
-        if self.echo == 'CMD,1093,SIM,ENABLE':
-            self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-            self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+    # # sim enable
+    # def sim_e(self):
+    #     try:
+    #         self.comm.sim_filename = self.file_input.text()
+    #         #self.comm.sim_filename = 'cansat_2023_simp.txt'
+    #         print(self.comm.sim_filename)
+    #     except:
+    #         print('Define SIM File')
+    #     self.comm.simEnabled = True
+    #     self.comm.send('CMD,1093,SIM,ENABLE\n')
+    #     if self.echo == 'CMD,1093,SIM,ENABLE':
+    #         self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+    #         self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+    #     #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
-    # sim activate
-    def sim_a(self):
-        # csv_filename = self.comm.sim_filename
-        # self.comm.simulation = True
-        # if self.comm.simEnabled:
-        #     self.comm.send('CMD,1093,SIM,ACTIVATE\n')
-        #     if self.echo == 'CMD,1093,SIM,ACTIVATE':
-        #         self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        #     # csv_filename = self.comm.csv_filename
-        #     # code to read CSV file
-        #     if csv_filename:
-        #         self.comm.start_sim(csv_filename)   
-        # self.data_read = True
-        # time.sleep(2)
-        # try: 
-        #     self.apply_update()
-        # except:
-        #     print('Could not update simulation')
-        # #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
-        csv_filename = self.comm.sim_filename
+    # # sim activate
+    # def sim_a(self):
+    #     # csv_filename = self.comm.sim_filename
+    #     # self.comm.simulation = True
+    #     # if self.comm.simEnabled:
+    #     #     self.comm.send('CMD,1093,SIM,ACTIVATE\n')
+    #     #     if self.echo == 'CMD,1093,SIM,ACTIVATE':
+    #     #         self.sim_activate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+    #     #     # csv_filename = self.comm.csv_filename
+    #     #     # code to read CSV file
+    #     #     if csv_filename:
+    #     #         self.comm.start_sim(csv_filename)   
+    #     # self.data_read = True
+    #     # time.sleep(2)
+    #     # try: 
+    #     #     self.apply_update()
+    #     # except:
+    #     #     print('Could not update simulation')
+    #     # #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+    #     csv_filename = self.comm.sim_filename
 
-        if not self.comm.simEnabled:
-            print("Enable simulation before activating it")
-            return
+    #     if not self.comm.simEnabled:
+    #         print("Enable simulation before activating it")
+    #         return
 
-        self.comm.simulation = True
-        self.data_read = True
+    #     self.comm.simulation = True
+    #     self.data_read = True
 
-        # Start receiving telemetry from the CanSat
-        self.comm.send('CMD,1093,CX,ON\n')
-        self.comm.start_read()
+    #     # Start receiving telemetry from the CanSat
+    #     self.comm.send('CMD,1093,CX,ON\n')
+    #     self.comm.start_read()
 
-        # Tell the CanSat to activate simulation mode
-        self.comm.send('CMD,1093,SIM,ACTIVATE\n')
+    #     # Tell the CanSat to activate simulation mode
+    #     self.comm.send('CMD,1093,SIM,ACTIVATE\n')
 
-        # Begin sending SIMP commands
-        if csv_filename:
-            self.comm.start_sim(csv_filename)
+    #     # Begin sending SIMP commands
+    #     if csv_filename:
+    #         self.comm.start_sim(csv_filename)
 
-        # Let the timer continuously update the GUI
-        self.timer.start()
+    #     # Let the timer continuously update the GUI
+    #     self.timer.start()
 
-    # sim disable
-    def sim_d(self):
-        self.comm.simulation = False
-        self.comm.simEnabled = False
-        self.data_read = False
-        self.comm.stop_sim()
-        self.comm.send("CMD,1093,SIM,DISABLE\n")
-        if self.echo == "CMD,1093,SIM,DISABLE":
-            self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-            self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-            self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+    # # sim disable
+    # def sim_d(self):
+    #     self.comm.simulation = False
+    #     self.comm.simEnabled = False
+    #     self.data_read = False
+    #     self.comm.stop_sim()
+    #     self.comm.send("CMD,1093,SIM,DISABLE\n")
+    #     if self.echo == "CMD,1093,SIM,DISABLE":
+    #         self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+    #         self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+    #         self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+    #     #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # calibration
     def cal(self):
