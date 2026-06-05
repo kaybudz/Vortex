@@ -40,6 +40,7 @@ class GCS(QMainWindow):
         self.lat_history = []
         self.lon_history = []
         self.alt_history = []
+        self.camera_mode = 0
 
         # set initial conditions
         self.data_read = False
@@ -148,6 +149,16 @@ class GCS(QMainWindow):
         self.set_time.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
         self.set_time.clicked.connect(self.time_set)
 
+        self.cam = QPushButton('Camera')
+        self.cam.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.cam.clicked.connect(self.camera)
+
+        # adding port dropdown
+        self.ports = QComboBox()
+        self.ports.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        self.ports.addItems(self.comm.port_list[:])
+        self.ports.currentTextChanged.connect(self.update_ports)
+
         button_layout.addWidget(self.sim_enable, 0, 0)
         button_layout.addWidget(self.sim_activate, 0, 1)
         button_layout.addWidget(self.sim_disable, 1, 0)
@@ -161,14 +172,9 @@ class GCS(QMainWindow):
         button_layout.addWidget(self.egg_release, 5, 0)
         button_layout.addWidget(self.egg_lock, 5, 1)
         button_layout.addWidget(self.reset, 1, 1)
+        button_layout.addWidget(self.cam, 6, 0)
+        button_layout.addWidget(self.ports, 6, 1)
         data_layout.addLayout(button_layout, 1)
-
-        # adding port dropdown
-        self.ports = QComboBox()
-        self.ports.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        self.ports.addItems(self.comm.port_list[:])
-        self.ports.currentTextChanged.connect(self.update_ports)
-        data_layout.addWidget(self.ports)
 
         # adding csv filename for sim mode
         self.file_input = QLineEdit('SIM File')
@@ -637,59 +643,56 @@ class GCS(QMainWindow):
 
     # sim enable
     def sim_e(self):
-        print('hi')
-        # try:
-        #     self.comm.sim_filename = self.file_input.text()
-        #     #self.comm.sim_filename = 'cansat_2023_simp.txt'
-        #     print(self.comm.sim_filename)
-        # except:
-        #     print('Define SIM File')
-        # self.comm.simEnabled = True
-        # self.comm.send('CMD,1093,SIM,ENABLE\n')
-        # if self.echo == 'CMD,1093,SIM,ENABLE':
-        #     self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        #     self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        # #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        try:
+            self.comm.sim_filename = self.file_input.text()
+            #self.comm.sim_filename = 'cansat_2023_simp.txt'
+            print(self.comm.sim_filename)
+        except:
+            print('Define SIM File')
+        self.comm.simEnabled = True
+        self.comm.send('CMD,1093,SIM,ENABLE\n')
+        if self.echo == 'CMD,1093,SIM,ENABLE':
+            self.sim_enable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.sim_disable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim activate
     def sim_a(self):
-        print('hi')
-        # csv_filename = self.comm.sim_filename
+        csv_filename = self.comm.sim_filename
 
-        # if not self.comm.simEnabled:
-        #     print("Enable simulation before activating it")
-        #     return
+        if not self.comm.simEnabled:
+            print("Enable simulation before activating it")
+            return
 
-        # self.comm.simulation = True
-        # self.data_read = True
+        self.comm.simulation = True
+        self.data_read = True
 
-        # # Start receiving telemetry from the CanSat
-        # self.comm.send('CMD,1093,CX,ON\n')
-        # self.comm.start_read()
+        # Start receiving telemetry from the CanSat
+        self.comm.send('CMD,1093,CX,ON\n')
+        self.comm.start_read()
 
-        # # Tell the CanSat to activate simulation mode
-        # self.comm.send('CMD,1093,SIM,ACTIVATE\n')
+        # Tell the CanSat to activate simulation mode
+        self.comm.send('CMD,1093,SIM,ACTIVATE\n')
 
-        # # Begin sending SIMP commands
-        # if csv_filename:
-        #     self.comm.start_sim(csv_filename)
+        # Begin sending SIMP commands
+        if csv_filename:
+            self.comm.start_sim(csv_filename)
 
-        # # Let the timer continuously update the GUI
-        # self.timer.start()
+        # Let the timer continuously update the GUI
+        self.timer.start()
 
     # sim disable
     def sim_d(self):
-        print('hi')
-        # self.comm.simulation = False
-        # self.comm.simEnabled = False
-        # self.data_read = False
-        # self.comm.stop_sim()
-        # self.comm.send("CMD,1093,SIM,DISABLE\n")
-        # if self.echo == "CMD,1093,SIM,DISABLE":
-        #     self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-        #     self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        #     self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        # #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+        self.comm.simulation = False
+        self.comm.simEnabled = False
+        self.data_read = False
+        self.comm.stop_sim()
+        self.comm.send("CMD,1093,SIM,DISABLE\n")
+        if self.echo == "CMD,1093,SIM,DISABLE":
+            self.sim_disable.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.sim_enable.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.sim_activate.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+        #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     # calibration
     def cal(self):
@@ -725,6 +728,16 @@ class GCS(QMainWindow):
         with open("Flight_1093.csv", "w") as file:
             pass  # Doing nothing inside clears the file completely
         #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
+    
+    def camera(self):
+        if self.camera_mode == 0:
+            self.comm.send('CMD,1093,MEC,CAM,ON\n')
+            self.acs.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.camera_mode = 1
+        else:
+            self.comm.send('CMD,1093,MEC,CAM,OFF\n')
+            self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
+            self.camera_mode = 0
 
     # ACS
     def acs_sys(self):
