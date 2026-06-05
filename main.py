@@ -18,7 +18,7 @@ from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from LED_simulation import LED
+# from LED_simulation import LED
 import time
 #from playsound import playsound # add sounds to hitting buttons? is there any sort of speaker system with the pi5
 #import pygame
@@ -44,7 +44,7 @@ class GCS(QMainWindow):
         # set initial conditions
         self.data_read = False
         self.comm = live_read()
-        self.led = LED()
+        # self.led = LED()
         self.probe = 0 # tells us  the payload has not been released from the container
         self.egg = 0 # tells us the egg has not been released from the payload
         self.r_packet = 0 # recieved packet count
@@ -368,29 +368,8 @@ class GCS(QMainWindow):
         # if not new_telemetry_received:
         #     return
 
-    # Table and graph updates only happen for a new telemetry packet
-        # print statement for testing purposes
-        # print('New data added')
-
         self.comm.update()
 
-        # updating data table
-        # establishing initial mission time
-        # FAKE MISSION TIME
-        # if int(self.seconds) < 60:
-        #     self.seconds = int(self.seconds) + 1
-        # elif int(self.seconds) > 60 & int(self.minutes) < 60:
-        #     self.minutes = int(self.minutes) + 1
-        #     self.seconds = 0
-        # else:
-        #     self.hours = int(self.hours) + 1
-        #     self.minutes = 0
-        # self.data_table.setItem(0, 0, QTableWidgetItem(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}"))
-        # print(f"{int(self.hours):02d}:{int(self.minutes):02d}:{int(self.seconds):02d}")
-
-        # updating packet count 
-        # GET RID OF PCKT COUNTING WHEN NO INFO
-        #if self.curr_pckt != self.comm.pckt[-1]:
         try:
             if self.comm.pckt[-1] != self.comm.pckt[-2]:
                 if self.comm.pckt[-1] - self.comm.pckt[-2] == 1:
@@ -435,65 +414,65 @@ class GCS(QMainWindow):
         self.fsw.setText('FSW State: ' + str(self.comm.state[-1]))
         if self.partytime == 1:
             print('party')
-            try:
-                self.led.send_LED('Galaxy')
-            except:
-                print('Galaxy')
+            # try:
+            #     self.led.send_LED('Galaxy')
+            # except:
+            #     print('Galaxy')
         elif self.comm.state[-1] == 'LAUNCH_PAD':
             self.fsw.setStyleSheet('background-color: #ea9999; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            try:
-                self.led.send_LED('LAUNCH_PAD')
-            except:
-                print('LAUNCH_PAD')
+            # try:
+            #     self.led.send_LED('LAUNCH_PAD')
+            # except:
+            #     print('LAUNCH_PAD')
         elif self.comm.state[-1] == 'ASCENT':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #f9cb9c; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            try:
-                self.led.send_LED('ASCENT')
-            except:
-                print('ASCENT')
+            # try:
+            #     self.led.send_LED('ASCENT')
+            # except:
+            #     print('ASCENT')
         elif self.comm.state[-1] == 'APOGEE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #ffe599; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            try:
-                self.led.send_LED('APOGEE')
-            except:
-                print('APOGEE')
+            # try:
+            #     self.led.send_LED('APOGEE')
+            # except:
+            #     print('APOGEE')
         elif self.comm.state[-1] == 'DESCENT':
             self.fsw.setStyleSheet('background-color: #b6d7a8; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            try:
-                self.led.send_LED('DESCENT')
-            except:
-                print('DESCENT')
+            # try:
+            #     self.led.send_LED('DESCENT')
+            # except:
+            #     print('DESCENT')
         elif self.comm.state[-1] == 'PROBE_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #a4c2f4; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.probe = 1 # tells us the payload has been released from the container
-            try:
-                self.led.send_LED('PROBE_RELEASE')
-            except:
-                print('PROBE_RELEASE')
+            # try:
+            #     self.led.send_LED('PROBE_RELEASE')
+            # except:
+            #     print('PROBE_RELEASE')
         elif self.comm.state[-1] == 'PAYLOAD_RELEASE':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #b4a7d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.egg = 1 # tells us the egg has been released from the payload
-            try:
-                self.led.send_LED('PAYLOAD_RELEASE')
-            except:
-                print('PAYLOAD_RELEASE')
+            # try:
+            #     self.led.send_LED('PAYLOAD_RELEASE')
+            # except:
+            #     print('PAYLOAD_RELEASE')
         elif self.comm.state[-1] == 'LANDED':
             self.velocity.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
             self.fsw.setStyleSheet('background-color: #f6b8d6; font-family: roboto; font-size: 16px; font-weight: bold; border: 2px solid black')
-            try:
-                self.led.send_LED('LANDED')
-            except:
-                print('LANDED')
-        else:
-            try:
-                self.led.send_LED('Waiting')
-            except:
-                return
+            # try:
+            #     self.led.send_LED('LANDED')
+            # except:
+            #     print('LANDED')
+        # else:
+        #     try:
+        #         self.led.send_LED('Waiting')
+        #     except:
+        #         print('Waiting')
 
         # cmd echo label
         self.echo.setText('CMD Echo: ' + str(self.comm.cmd[-1]))
