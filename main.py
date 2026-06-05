@@ -641,7 +641,7 @@ class GCS(QMainWindow):
         self.comm.send('CMD,1093,CX,ON\n')
         self.comm.start_read()
         self.timer.start()
-        self.apply_update()
+        # self.apply_update()
         #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # cx_off
