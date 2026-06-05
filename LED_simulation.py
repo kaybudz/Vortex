@@ -3,7 +3,7 @@ import serial
 
 class LED():
     def __init__(self):
-        time.sleep(2)
+        # time.sleep(2)
         try:
             self.ser = serial.Serial("/dev/ttyAMA0")
         except serial.SerialException:
@@ -25,7 +25,7 @@ class LED():
             message = f"{state}\n"
             self.ser.write(message.encode('utf-8'))
             print('Sent: ',state)
-            time.sleep(4)
+            # time.sleep(4)
         except KeyboardInterrupt:
             print('\nStopping flight state transmission...')
             self.ser.close()
