@@ -587,7 +587,7 @@ class GCS(QMainWindow):
         elif self.comm.cmd[-1] == 'CMD,1093,CX,OFF':
             self.cx_off.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
             self.cx_on.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-        elif self.comm.cmd[-1] == 'CMD,1093,ST,UTC':
+        elif self.comm.cmd[-1] == 'CMD,1093,ST,GPS':
             self.set_time.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
         elif self.comm.cmd[-1] == 'CMD,1093,CAL':
             self.calibrate.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
@@ -637,7 +637,7 @@ class GCS(QMainWindow):
     
     # set time
     def time_set(self):
-        self.comm.send('CMD,1093,ST,UTC\n')
+        self.comm.send('CMD,1093,ST,GPS\n')
         #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
 
     # sim enable
