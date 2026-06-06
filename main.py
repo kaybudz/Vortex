@@ -40,7 +40,6 @@ class GCS(QMainWindow):
         self.lat_history = []
         self.lon_history = []
         self.alt_history = []
-        self.camera_mode = 0
 
         # set initial conditions
         self.data_read = False
@@ -730,14 +729,8 @@ class GCS(QMainWindow):
         #playsound('C:/Users/kayla/Python311/Vortex/laser.mp3')
     
     def camera(self):
-        if self.camera_mode == 0:
-            self.comm.send('CMD,1093,MEC,CAM,ON\n')
-            self.acs.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
-            self.camera_mode = 1
-        else:
-            self.comm.send('CMD,1093,MEC,CAM,OFF\n')
-            self.acs.setStyleSheet('background-color: #cd96ff; font-family: roboto; font-size: 16px; font-weight: bold')
-            self.camera_mode = 0
+        self.comm.send('CMD,1093,MEC,CAM,ON\n')
+        self.acs.setStyleSheet('background-color: #7eb4d0; font-family: roboto; font-size: 16px; font-weight: bold')
 
     # ACS
     def acs_sys(self):
