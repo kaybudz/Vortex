@@ -1,5 +1,6 @@
 # launchpad coordinates 38.37583 deg N, -79.6078 deg E
 # test launch target coordinates 31.072094 deg N, -86.053301 deg E
+# landing coordinates 38.376017°N, -79.607872°E
 
 # importing necessary libraries
 import sys
@@ -51,8 +52,8 @@ class GCS(QMainWindow):
         self.l_packet = 0 # lost packet count
         self.sys = False # acs system activation, should this be defaulted to true?
         self.play = False # setting condition for party mode
-        self.lat_coord = 0
-        self.long_coord = 0
+        self.lat_coord = 38.376017
+        self.long_coord = -79.607872
         self.curr_pckt = ''
         self.partytime = 0
 
